@@ -132,22 +132,20 @@ class Preprocessing():
 
 class Bilstm_Dataset(Dataset):
 
-    def __init__(self,df,rest_col,target_col=''):
+    def __init__(self,df,col,target_col):
 
-        rest_col = [col for col in rest_col if col not in ['id']]
-        self.feats = df[rest_col].values
-        self.target = df[target_col].values
+        # rest_col = [col for col in rest_col if col not in ['id']]
+        self.feats = torch.tensor(list(df[col].values.tolist()) , dtype=torch.long)
+        self.target = torch.tensor(list(df[target_col].values.tolist()) , dtype=torch.long)
         self.nsamples = len(df)
-
 
     def __len__(self):
         return self.nsamples
 
     def __getitem__(self, index):
-        return torch.tensor(self.feats[index],dtype=torch.long),torch.tensor(self.target[index],dtype=torch.long)
+        return self.feats[index],self.target[index]
 
-
-    class forming_batches():
+class forming_batches():
   def __init__(self,vocab,trimsize_to_col_dict,df,target):
     self.mapping_trimsize = trimsize_to_col_dict
     self.df = df
@@ -200,8 +198,7 @@ class Bilstm_Dataset(Dataset):
     
     return self.df , self.vocab
     
-    
-    class Config(object):
+class Config(object):
     embed_size = 300
     hidden_layers = 1
     hidden_size = 128
@@ -235,9 +232,14 @@ def train(path,preprocess,target,rest_col=['id','q1_Title','q1_Body','q1_Accepte
   df2 , vocab_obj = batchify_obj.run()
   print(df2.head())
   
-  dataset = Bilstm_Dataset(df2,new_cols,target)
+  print("\n\n Sequence of columns : ")
+  rest_col = [col for col in list(df2.columns) if col not in ['id']]
+  print(rest_col[0:2].append(rest_col[-1]))
+  dataset_title = Bilstm_Dataset(df2,rest_col[0:2], rest_col[-1])
+  dataset_body = Bilstm_Dataset(df2,rest_col[2:4], rest_col[-1])
+  dataset_answer = Bilstm_Dataset(df2,rest_col[4:6], rest_col[-1])
 
-  NUM_INSTANCES = dataset.__len__()
+  NUM_INSTANCES = dataset_title.__len__()
   NUM_INSTANCES = NUM_INSTANCES*config.sample
   TEST_SIZE = int(NUM_INSTANCES * config.split_ratio)
 
@@ -246,12 +248,17 @@ def train(path,preprocess,target,rest_col=['id','q1_Title','q1_Body','q1_Accepte
   test_idx = np.random.choice(indices, size = TEST_SIZE, replace = False)
   train_idx = list(set(indices) - set(test_idx))
   train_sampler, test_sampler = SubsetRandomSampler(train_idx), SubsetRandomSampler(test_idx)
-
-  train_loader = DataLoader(dataset, batch_size = config.batch_size, sampler = train_sampler)
-  test_loader = DataLoader(dataset, batch_size = config.batch_size, sampler = test_sampler)
-
-
-  return train_loader , test_loader
-
   
-#Error -> TypeError: can't convert np.ndarray of type numpy.object_. The only supported types are: float64, float32, float16, int64, int32, int16, int8, uint8, and bool.
+  train_loader_title = DataLoader(dataset_title, batch_size = config.batch_size, sampler = train_sampler)
+  test_loader_title = DataLoader(dataset_title, batch_size = config.batch_size, sampler = test_sampler)
+
+  train_loader_body = DataLoader(dataset_body, batch_size = config.batch_size, sampler = train_sampler)
+  test_loader_body = DataLoader(dataset_body, batch_size = config.batch_size, sampler = test_sampler)
+
+  train_loader_ans = DataLoader(dataset_answer, batch_size = config.batch_size, sampler = train_sampler)
+  test_loader_ans = DataLoader(dataset_answer, batch_size = config.batch_size, sampler = test_sampler)
+
+  train_loaders = [train_loader_title,train_loader_body,train_loader_ans]
+  test_loaders = [test_loader_title,test_loader_body,test_loader_ans]
+
+  return train_loaders , test_loaders

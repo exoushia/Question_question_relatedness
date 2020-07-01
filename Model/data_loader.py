@@ -47,9 +47,6 @@ class Vocab:
             self.addWord(word.lower()) 
 
 
-
-
-
 class Preprocessing():
 
     def __init__(self, path , target_col , cols_to_include=['id','q1_Title','q1_Body','q1_AcceptedAnswerBody',

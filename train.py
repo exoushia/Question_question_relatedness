@@ -27,18 +27,25 @@ class Config(object):
 
 
 
-def evaluate_model(model, val_iterator,num_batches_val,loss_fn):
+def evaluate_model(model, val_loader,num_batches_val,loss_fn):
     all_y = []
-    titles = val_iterator[0]
-    body = val_iterator[1]
-    ans = val_iterator[2]
+
+    title_iter = iter(val_loader[0])
+    body_iter = iter(val_loader[1])
+    ans_iter = iter(val_loader[2])
+
     running_loss = 0
     running_corrects = 0
     maintaining_F1 = []
     for i in range(num_batches_val):
-        y_pred = model.calling([titles[0][i],titles[1][i]],[body[0][i],body[1][i]],[ans[0][i],ans[1][i]])
+
+      	title = next(title_iter) #ith batch
+        body = next(body_iter) #ith batch
+        ans = next(ans_iter) #ith batch
+
+        y_pred = model.calling(title[0],body[0],ans[0])
         _ , predicted = torch.max(y_pred,1) 
-        labels = titles[2][i]
+        labels = title[1]
         maintaining_F1.append([predicted,labels])
         # _,label_idx = torch.max(titles[2][i])
         loss = loss_fn(y_pred,torch.tensor(labels , dtype=torch.long)) 
@@ -49,43 +56,48 @@ def evaluate_model(model, val_iterator,num_batches_val,loss_fn):
 
     return epoch_loss , epoch_acc , maintaining_F1
 
-def run_epoch(train_iterator, val_iterator, epoch, num_batches, num_batches_val, optimizer):
-	train_losses = []
-	val_accuracies = []
-	val_losses=[]
-	losses = []
+def run_epoch(model, train_loader, val_loader, epoch, num_batches, num_batches_val, optimizer):
+    train_losses = []
+    val_accuracies = []
+    val_losses=[]
+    losses = []
+    
+    title_iter = iter(train_loader[0])
+    body_iter = iter(train_loader[1])
+    ans_iter = iter(train_loader[2])
+    
+    model.train()
+    for i in tqdm.trange(num_batches,file=sys.stdout, desc='Iterations'):
+        optimizer.zero_grad()
+        
+        title = next(title_iter) #ith batch
+        body = next(body_iter) #ith batch
+        ans = next(ans_iter) #ith batch
+        
+        y_pred = model.calling(title[0],body[0],ans[0])
+        y = title[1]    
+        loss = model.loss(y_pred, y)
+        loss.backward()
+        losses.append(loss.detach().numpy())
+        optimizer.step()
 
-	titles = train_iterator[0]
-	body = train_iterator[1]
-	ans = train_iterator[2]
-
-	self.train()
-	for i in tqdm.trange(num_batches,file=sys.stdout, desc='Iterations'):
-	    optimizer.zero_grad()
-	    y_pred = self.calling([titles[0][i],titles[1][i]],[body[0][i],body[1][i]],[ans[0][i],ans[1][i]])
-	    y = titles[2][i]
-	    loss = self.loss(y_pred, y)
-	    loss.backward()
-	    losses.append(loss.detach().numpy())
-	    optimizer.step()
-
-	    if i % 10 == 0:
-	        print("Iter: {},Epoch: {}\n".format(i+1,epoch))
-	        avg_train_loss = np.mean(losses)
-	        train_losses.append(avg_train_loss)
-	        print("\tAverage training loss: {:.5f}\n".format(avg_train_loss))
-	        losses = []
-	        self.eval()
-	        # Evalute Accuracy on validation set
-	        with torch.no_grad():
-	          val_loss , val_accuracy , curr_F1 = evaluate_model(val_iterator,num_batches_val,self.loss)
-	          val_accuracies.append(val_accuracy)
-	          val_losses.append(val_loss)
-	          print("\tVal Accuracy: {:.4f}\n".format(val_accuracy))
-	          print("\n")
-	          self.train()
-	        
-	return train_losses, val_losses, val_accuracies , curr_F1
+        if i % 10 == 0:
+            print("Iter: {},Epoch: {}\n".format(i+1,epoch))
+            avg_train_loss = np.mean(losses)
+            train_losses.append(avg_train_loss)
+            print("\tAverage training loss: {:.5f}\n".format(avg_train_loss))
+            losses = []
+            model.eval()
+            # Evalute Accuracy on validation set
+            with torch.no_grad():
+              val_loss , val_accuracy , curr_F1 = evaluate_model(model,val_loader,num_batches_val,model.loss)
+              val_accuracies.append(val_accuracy)
+              val_losses.append(val_loss)
+              print("\tVal Accuracy: {:.4f}\n".format(val_accuracy))
+              print("\n")
+              model.train()
+            
+    return train_losses, val_losses, val_accuracies , curr_F1
 
 
 def train_model(model, batch_size, patience, n_epochs):

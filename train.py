@@ -4,30 +4,90 @@ import tqdm
 import time
 import sys
 import numpy as np
+import pickle
 
 from Model.network_architecture import BiLSTM, EarlyStopping
-
-
 from Model/data_loader import *
 
-class Config(object):
-    embed_size = 300
-    hidden_layers = 1
-    hidden_size = 128
-    bidirectional = True
-    output_size = 4
-    epochs = 25
-    lr = 0.001
-    batch_size = 32
-    # max_sen_len = 20 # Sequence length for RNN
-    dropout_keep = 0.2
-    sample = 1.0
-    patience = 5
-	delta = 0.01
+
+def embeddings_gen(vocab):
+    matrix_len = len(vocab.word2index)
+    weights_matrix = np.zeros((matrix_len+1, 300))
+    words_found = 0
+
+    infile = open('glove.840B.300d.pkl','rb')
+    glove = pickle.load(infile)
+    infile.close()
+
+    for index in vocab.index2word:
+        if index==0:
+            weights_matrix[index] = np.zeros((1,300))
+        try:
+            weights_matrix[index] = glove[vocab.index2word[index]]
+            words_found =words_found+ 1
+        except KeyError:
+            weights_matrix[index] = np.random.normal(scale=0.6, size=(1,300 ))
+
+    embedding_matrix = torch.FloatTensor(weights_matrix)
+    print("Words found in embedding:"+str(words_found))
+
+    return embedding_matrix
+
+def data_loading(path,preprocess,target,rest_col=['id','q1_Title','q1_Body','q1_AcceptedAnswerBody',
+                                                        'q1_AnswersBody','q2_Title','q2_Body','q2_AcceptedAnswerBody',
+                                                        'q2_AnswersBody'], 
+                                                         mapping_trimsize = {'q1_Title':10,'q1_Body':60,'answer_text1':180,'q2_Title':10,'q2_Body':60,'answer_text2':180} ):
+
+    if preprocess :
+        print(rest_col.append(target))
+        preprocess_class = Preprocessing(path,target)
+        df, new_cols = preprocess_class.run()
+    else:
+        df = pd.read_csv(path,usecols=rest_col.append(target))
+
+    vocab_obj  = Vocab('stack')
+    config = Config()
+    batchify_obj = forming_batches(vocab_obj,mapping_trimsize,df,target)
+
+    df2 , vocab_obj = batchify_obj.run()
+    print(df2.head())
+
+    print("\n\n Sequence of columns : ")
+    rest_col = [col for col in list(df2.columns) if col not in ['id']]
+    print(rest_col[0:2].append(rest_col[-1]))
+    dataset_title = Bilstm_Dataset(df2,rest_col[0:2], rest_col[-1])
+    dataset_body = Bilstm_Dataset(df2,rest_col[2:4], rest_col[-1])
+    dataset_answer = Bilstm_Dataset(df2,rest_col[4:6], rest_col[-1])
+
+    NUM_INSTANCES = dataset_title.__len__()
+    NUM_INSTANCES = NUM_INSTANCES*config.sample
+    TEST_SIZE = int(NUM_INSTANCES * config.split_ratio)
+
+    num_batches_train = (NUM_INSTANCES-TEST_SIZE)/config.batch_size
+    num_batches_val = TEST_SIZE/config.batch_size
+
+    indices = list(range(NUM_INSTANCES))
+
+    test_idx = np.random.choice(indices, size = TEST_SIZE, replace = False)
+    train_idx = list(set(indices) - set(test_idx))
+    train_sampler, test_sampler = SubsetRandomSampler(train_idx), SubsetRandomSampler(test_idx)
+
+    train_loader_title = DataLoader(dataset_title, batch_size = config.batch_size, sampler = train_sampler)
+    test_loader_title = DataLoader(dataset_title, batch_size = config.batch_size, sampler = test_sampler)
+
+    train_loader_body = DataLoader(dataset_body, batch_size = config.batch_size, sampler = train_sampler)
+    test_loader_body = DataLoader(dataset_body, batch_size = config.batch_size, sampler = test_sampler)
+
+    train_loader_ans = DataLoader(dataset_answer, batch_size = config.batch_size, sampler = train_sampler)
+    test_loader_ans = DataLoader(dataset_answer, batch_size = config.batch_size, sampler = test_sampler)
+
+    train_loaders = [train_loader_title,train_loader_body,train_loader_ans]
+    test_loaders = [test_loader_title,test_loader_body,test_loader_ans]
+
+    return train_loaders , test_loaders, config, vocab_obj, int(num_batches_train), int(num_batches_val)
 
 
-
-def evaluate_model(model, val_loader,num_batches_val,loss_fn):
+def evaluate_model(model, val_loader,num_batches_val):
     all_y = []
 
     title_iter = iter(val_loader[0])
@@ -39,27 +99,32 @@ def evaluate_model(model, val_loader,num_batches_val,loss_fn):
     maintaining_F1 = []
     for i in range(num_batches_val):
 
-      	title = next(title_iter) #ith batch
+        title = next(title_iter) #ith batch
         body = next(body_iter) #ith batch
         ans = next(ans_iter) #ith batch
 
-        y_pred = model.calling(title[0],body[0],ans[0])
-        _ , predicted = torch.max(y_pred,1) 
-        labels = title[1]
-        maintaining_F1.append([predicted,labels])
-        # _,label_idx = torch.max(titles[2][i])
-        loss = loss_fn(y_pred,torch.tensor(labels , dtype=torch.long)) 
+        y_pred = model.calling(title[0],body[0],ans[0]).cuda()
+        labels = title[1].cuda()
+
+        print("Shape of y pred2 {}".format(y_pred.shape))
+        print("Shape of y true2 {}".format(labels.shape))
+
+        maintaining_F1.append([torch.argmax(y_pred,1), torch.argmax(labels,1)])
+
+        loss = model.loss(y_pred, torch.argmax(labels,1)) 
         running_loss =running_loss+ loss.item()
-        running_corrects = running_corrects+ torch.sum(predicted == labels).item()
-    epoch_loss = 1.0*running_loss /num_batches
-    epoch_acc = 1.0*running_corrects /num_batches
+        running_corrects = running_corrects+ torch.sum(torch.argmax(y_pred,1) == torch.argmax(labels,1)).item()
+    epoch_loss = 1.0*running_loss /num_batches_val
+    epoch_acc = 1.0*running_corrects /num_batches_val
 
     return epoch_loss , epoch_acc , maintaining_F1
 
-def run_epoch(model, train_loader, val_loader, epoch, num_batches, num_batches_val, optimizer):
+
+def run_epoch(model, train_loader, val_loader, epoch, num_batches_train, num_batches_val, optimizer):
     train_losses = []
     val_accuracies = []
-    val_losses=[]
+    val_losses= []
+    f1 = []
     losses = []
     
     title_iter = iter(train_loader[0])
@@ -67,18 +132,24 @@ def run_epoch(model, train_loader, val_loader, epoch, num_batches, num_batches_v
     ans_iter = iter(train_loader[2])
     
     model.train()
-    for i in tqdm.trange(num_batches,file=sys.stdout, desc='Iterations'):
+    for i in tqdm.trange(num_batches_train, file=sys.stdout, desc='Iterations'):
         optimizer.zero_grad()
         
         title = next(title_iter) #ith batch
         body = next(body_iter) #ith batch
         ans = next(ans_iter) #ith batch
         
-        y_pred = model.calling(title[0],body[0],ans[0])
-        y = title[1]    
-        loss = model.loss(y_pred, y)
+        print("Shape of train title iter {}".format(title[0].shape))
+        
+        y_pred = model.calling(title[0],body[0],ans[0]).cuda()
+        y_true = title[1].cuda()
+
+        print("Shape of y pred {}".format(y_pred.shape))
+        print("Shape of y true {}".format(y_true.shape))
+
+        loss = model.loss(y_pred, torch.argmax(y_true,1))
         loss.backward()
-        losses.append(loss.detach().numpy())
+        losses.append(loss.detach().cpu().numpy())
         optimizer.step()
 
         if i % 10 == 0:
@@ -90,91 +161,76 @@ def run_epoch(model, train_loader, val_loader, epoch, num_batches, num_batches_v
             model.eval()
             # Evalute Accuracy on validation set
             with torch.no_grad():
-              val_loss , val_accuracy , curr_F1 = evaluate_model(model,val_loader,num_batches_val,model.loss)
-              val_accuracies.append(val_accuracy)
-              val_losses.append(val_loss)
-              print("\tVal Accuracy: {:.4f}\n".format(val_accuracy))
-              print("\n")
-              model.train()
+                val_loss , val_accuracy , curr_F1 = evaluate_model(model,val_loader,num_batches_val)
+                val_accuracies.append(val_accuracy)
+                val_losses.append(val_loss)
+                f1.append(curr_F1)
+
+                print("\tVal Accuracy: {:.4f}\n".format(val_accuracy))
+                print("\n")
+                model.train()
             
-    return train_losses, val_losses, val_accuracies , curr_F1
+    return train_losses, val_losses, val_accuracies , f1
 
 
-def train_model(model, batch_size, patience, n_epochs):
+def train_model(path):
 
-	np.random.seed(777)   # for reproducibility
+    np.random.seed(777)   # for reproducibility
 
-	config = Config()
+    train_loaders, val_loaders, config, vocab, num_batches_train ,num_batches_val = data_loading(path,True,'class')
 
-	dataset = Bilstm_Dataset()
-	NUM_INSTANCES = dataset.__len__()
-	NUM_INSTANCES = NUM_INSTANCES*config.sample
-	TEST_RATIO = 0.3
-	TEST_SIZE = int(NUM_INSTANCES * 0.3)
+    best_val_loss = float("inf")
 
-	indices = list(range(NUM_INSTANCES))
-
-	test_idx = np.random.choice(indices, size = TEST_SIZE, replace = False)
-	train_idx = list(set(indices) - set(test_idx))
-	train_sampler, test_sampler = SubsetRandomSampler(train_idx), SubsetRandomSampler(test_idx)
-
-	train_loader = DataLoader(dataset, batch_size = BATCH_SIZE, sampler = train_sampler)
-	test_loader = DataLoader(dataset, batch_size = BATCH_SIZE, sampler = test_sampler)
-
-
-	best_val_loss = float("inf")
-
-	loss_fn = nn.CrossEntropyLoss()
-	model = BiLSTM(config, len(stack.word2index), embedding_matrix,loss_fn)
-	optimizer = optim.Adam(model.parameters(), lr=config.lr)
-
-	# initialize the early_stopping object
-	early_stopping = EarlyStopping(patience=config.patience, verbose=True, delta=config.delta)
-
-	if torch.cuda.is_available():
-	    model.cuda()
-
-	model.train()
-
-	train_losses_plot = []
-	val_accuracies_plot = []
-	val_losses_plot = []
-	confusion_matrix = []
-	num_batches = len(train_iter[1][0]) #87
-	num_batches_val = len(val_iter[1][0]) #37
-	start_of_training = time.time()
-	for i in range(config.epochs):
-	    print ("Epoch: {}".format(i))
-	    train_loss,val_losses,val_accuracy,curr_F1 = model.run_epoch(train_iter,val_iter,i,num_batches,num_batches_val,optimizer)
-	    train_losses_plot.append(train_loss)
-	    val_accuracies_plot.append(val_accuracy)
-	    confusion_matrix.append(curr_F1)
-
-	    early_stopping(val_losses[-1], model)
-	        
-	    if early_stopping.early_stop:
-	        print("Early stopping....\n")
-	        break
-
-	    if np.mean(np.array(val_losses)) < best_val_loss:
-	      best_val_loss = np.mean(np.array(val_losses))
-	      best_model = model
-	    
-	end_of_training = time.time()
-
-	print("\n\n Training Time : {:5.2f}".format(end_of_training-start_of_training))
-	    
-    # early_stopping needs the validation loss to check if it has decresed, 
-    # and if it has, it will make a checkpoint of the current model
-    early_stopping(valid_loss, model)
+    embedding_matrix = embeddings_gen(vocab)
     
-    if early_stopping.early_stop:
-        print("Early stopping")
-        break
+    model = BiLSTM(config, len(vocab.word2index), embedding_matrix)
+    optimizer = optim.Adam(model.parameters(), lr=config.lr)
+
+    # initialize the early_stopping object
+    early_stopping = EarlyStopping(patience=config.patience, verbose=True, delta=config.delta)
+
+    if torch.cuda.is_available():
+        model.cuda()
+
+    model.train()
+
+    train_losses_plot = []
+    val_accuracies_plot = []
+    val_losses_plot = []    
+    epoch_f1 = []
+
+    start_of_training = time.time()
+
+    for i in range(config.epochs):
+        print ("Epoch: {}".format(i))
+        train_loss,val_loss,val_accuracy, all_F1 = run_epoch(model, train_loaders, val_loaders, i, num_batches_train, num_batches_val, optimizer)
+
+        train_losses_plot.append(train_loss)
+        val_losses_plot.append(val_loss)
+        val_accuracies_plot.append(val_accuracy)
+        epoch_f1.append(all_F1)
+  
+        early_stopping(val_loss[-1], model)
+            
+        if early_stopping.early_stop:
+            print("Early stopping....\n")
+            break
+
+        avg_train_losses = np.mean(np.array(train_loss))
+        avg_val_losses = np.mean(np.array(val_loss))
+        if avg_val_losses < best_val_loss:
+            best_val_loss = avg_val_losses
+            best_model = model
         
-    # load the last checkpoint with the best model
+    end_of_training = time.time()
+
+    print("\n\n Training Time : {:5.2f} secs".format(end_of_training-start_of_training))
+       
+    # load the last checkpoint with the best model  
     model.load_state_dict(torch.load('checkpoint.pt'))
 
-    return  model, avg_train_losses, avg_valid_losses
+    return  model, avg_train_losses, avg_val_losses, train_losses_plot, val_accuracies_plot, val_losses_plot, epoch_f1
 
 
+if __name__ == '__main__':
+    train_model('train_sample.csv')

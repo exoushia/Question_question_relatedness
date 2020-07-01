@@ -1,21 +1,25 @@
-import torch
-from torch.utils.data import DataLoader, Dataset , SubsetRandomSampler
+import pandas as pd
+import numpy as np
+import pickle
+import re
+# Ignore warnings
+import warnings
+warnings.filterwarnings("ignore")
+
+
 from sklearn.preprocessing import LabelEncoder
 from nltk.corpus import stopwords
 from nltk.tokenize import sent_tokenize
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer 
-
-import pandas as pd
-import numpy as np
-
-
-import pickle
-# Ignore warnings
-import warnings
-warnings.filterwarnings("ignore")
 nltk.download('stopwords')
-import re
+nltk.download('punkt')
+nltk.download('wordnet')
+
+import torch
+from torch.utils.data import DataLoader, Dataset , SubsetRandomSampler
+import torch.nn as nn
+import torch.optim as optim
 
 
 # CUDA for PyTorch
@@ -203,59 +207,12 @@ class Config(object):
     output_size = 4
     epochs = 25
     lr = 0.001
+    ll_hidden_size=50 #Linear layer hidden sizes
     batch_size = 32
     # max_sen_len = 20 # Sequence length for RNN
     dropout_keep = 0.2
     sample = 1
     split_ratio =0.4
-
-
-def train(path,preprocess,target,rest_col=['id','q1_Title','q1_Body','q1_AcceptedAnswerBody',
-                                                        'q1_AnswersBody','q2_Title','q2_Body','q2_AcceptedAnswerBody',
-                                                        'q2_AnswersBody'], 
-                                                         mapping_trimsize = {'q1_Title':10,'q1_Body':60,'answer_text1':180,'q2_Title':10,'q2_Body':60,'answer_text2':180} ):
-
-  if preprocess :
-    print(rest_col.append(target))
-    preprocess_class = Preprocessing(path,target)
-    df , new_cols = preprocess_class.run()
-  else:
-    df = pd.read_csv(path,usecols=rest_col.append(target))
-  
-  vocab_obj  = Vocab('stack')
-  config = Config()
-  batchify_obj = forming_batches(vocab_obj,mapping_trimsize,df,target)
-
-  df2 , vocab_obj = batchify_obj.run()
-  print(df2.head())
-  
-  print("\n\n Sequence of columns : ")
-  rest_col = [col for col in list(df2.columns) if col not in ['id']]
-  print(rest_col[0:2].append(rest_col[-1]))
-  dataset_title = Bilstm_Dataset(df2,rest_col[0:2], rest_col[-1])
-  dataset_body = Bilstm_Dataset(df2,rest_col[2:4], rest_col[-1])
-  dataset_answer = Bilstm_Dataset(df2,rest_col[4:6], rest_col[-1])
-
-  NUM_INSTANCES = dataset_title.__len__()
-  NUM_INSTANCES = NUM_INSTANCES*config.sample
-  TEST_SIZE = int(NUM_INSTANCES * config.split_ratio)
-
-  indices = list(range(NUM_INSTANCES))
-
-  test_idx = np.random.choice(indices, size = TEST_SIZE, replace = False)
-  train_idx = list(set(indices) - set(test_idx))
-  train_sampler, test_sampler = SubsetRandomSampler(train_idx), SubsetRandomSampler(test_idx)
-  
-  train_loader_title = DataLoader(dataset_title, batch_size = config.batch_size, sampler = train_sampler)
-  test_loader_title = DataLoader(dataset_title, batch_size = config.batch_size, sampler = test_sampler)
-
-  train_loader_body = DataLoader(dataset_body, batch_size = config.batch_size, sampler = train_sampler)
-  test_loader_body = DataLoader(dataset_body, batch_size = config.batch_size, sampler = test_sampler)
-
-  train_loader_ans = DataLoader(dataset_answer, batch_size = config.batch_size, sampler = train_sampler)
-  test_loader_ans = DataLoader(dataset_answer, batch_size = config.batch_size, sampler = test_sampler)
-
-  train_loaders = [train_loader_title,train_loader_body,train_loader_ans]
-  test_loaders = [test_loader_title,test_loader_body,test_loader_ans]
-
-  return train_loaders , test_loaders
+    loss_fn = nn.CrossEntropyLoss()
+    patience=25
+    delta=0.00

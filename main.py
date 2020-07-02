@@ -31,4 +31,4 @@ if __name__ == '__main__':
 	path_to_glove='glove.840B.300d.pkl'
 	path_to_cpt='Expt_results/checkpoints/checkpoint.pt'
 
-    train_model(path_to_data, train_file, val_file, test_file, path_to_glove, path_to_cpt, config)
+    train_model(path_to_data, train_file, val_file, test_file, path_to_glove, path_to_cpt, config,preprocess=False)

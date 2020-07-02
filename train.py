@@ -150,7 +150,7 @@ def data_loading(train_path, val_path, preprocess, target, config, rest_col=['id
         train_loaders = [train_loader_title,train_loader_body,train_loader_ans]
         val_loaders = [val_loader_title,val_loader_body,val_loader_ans]
 
-        return train_loaders , val_loaders, config, vocab_obj, int(num_batches_train), int(num_batches_val)
+        return train_loaders , val_loaders, config, vocab_obj, int(num_batches_train), int(num_batches_val) 
 
 
 
@@ -251,8 +251,6 @@ def train_model(path_to_data, train_file, val_file, test_file, path_to_glove, pa
 	else : 
 		val_path = path_to_data + '/' + val_file
 		
-	test_path = path_to_data + '/' + test_file
-
     train_loaders, val_loaders, vocab, num_batches_train, num_batches_val = data_loading(train_path, val_path, preprocess, target='class', config=config)
 
     best_val_loss = float("inf")
@@ -305,4 +303,4 @@ def train_model(path_to_data, train_file, val_file, test_file, path_to_glove, pa
     # load the last checkpoint with the best model  
     model.load_state_dict(torch.load(path_to_cpt))
 
-    return  model, avg_train_losses, avg_val_losses, train_losses_plot, val_accuracies_plot, val_losses_plot, epoch_f1
+    return  model, avg_train_losses, avg_val_losses, train_losses_plot, val_accuracies_plot, val_losses_plot, epoch_f1,vocab

@@ -220,3 +220,4 @@ class Config(object):
     loss_fn = nn.CrossEntropyLoss()
     patience=25
     delta=0.00
+    batch_size_test = None

@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+
 class plot_results():
     #Instantiation of class
     def __init__(self,train_losses_plot,val_losses_plot,val_accuracies_plot,figname=["Training.png","Validation.png"],smooth=False):

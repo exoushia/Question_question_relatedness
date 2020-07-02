@@ -11,12 +11,12 @@ from Model.network_architecture import BiLSTM, EarlyStopping
 from Model/data_loader import *
 
 
-def embeddings_gen(vocab):
+def embeddings_gen(vocab, path_to_glove):
     matrix_len = len(vocab.word2index)
     weights_matrix = np.zeros((matrix_len+1, 300))
     words_found = 0
 
-    infile = open('glove.840B.300d.pkl','rb')
+    infile = open(path_to_glove,'rb')
     glove = pickle.load(infile)
     infile.close()
 
@@ -34,20 +34,21 @@ def embeddings_gen(vocab):
 
     return embedding_matrix
 
-def data_loading(path,preprocess,target,rest_col=['id','q1_Title','q1_Body','q1_AcceptedAnswerBody',
+
+def data_loading(train_path, val_path, preprocess, target, config, rest_col=['id','q1_Title','q1_Body','q1_AcceptedAnswerBody',
                                                         'q1_AnswersBody','q2_Title','q2_Body','q2_AcceptedAnswerBody',
                                                         'q2_AnswersBody'], 
                                                          mapping_trimsize = {'q1_Title':10,'q1_Body':60,'answer_text1':180,'q2_Title':10,'q2_Body':60,'answer_text2':180} ):
 
-    if preprocess :
+    if preprocess:
         print(rest_col.append(target))
-        preprocess_class = Preprocessing(path,target)
+        preprocess_class = Preprocessing(train_path,target)
         df, new_cols = preprocess_class.run()
     else:
-        df = pd.read_csv(path,usecols=rest_col.append(target))
+        df = pd.read_csv(train_path, usecols=rest_col.append(target))
 
     vocab_obj  = Vocab('stack')
-    config = Config()
+    
     batchify_obj = forming_batches(vocab_obj,mapping_trimsize,df,target)
 
     df2 , vocab_obj = batchify_obj.run()
@@ -174,21 +175,25 @@ def run_epoch(model, train_loader, val_loader, epoch, num_batches_train, num_bat
     return train_losses, val_losses, val_accuracies , f1
 
 
-def train_model(path):
+def train_model(path_to_data, train_file, val_file, test_file, path_to_glove, path_to_cpt, config):
 
     np.random.seed(777)   # for reproducibility
 
-    train_loaders, val_loaders, config, vocab, num_batches_train ,num_batches_val = data_loading(path,True,'class')
+	train_path = path_to_data + '/' + train_file
+	val_path = path_to_data + '/' + val_file
+	test_path = path_to_data + '/' + test_file
+
+    train_loaders, val_loaders, vocab, num_batches_train, num_batches_val = data_loading(train_path, val_path, preprocess=True, target='class', config=config)
 
     best_val_loss = float("inf")
 
-    embedding_matrix = embeddings_gen(vocab)
+    embedding_matrix = embeddings_gen(vocab, path_to_glove)
     
     model = BiLSTM(config, len(vocab.word2index), embedding_matrix)
     optimizer = optim.Adam(model.parameters(), lr=config.lr)
 
     # initialize the early_stopping object
-    early_stopping = EarlyStopping(patience=config.patience, verbose=True, delta=config.delta)
+    early_stopping = EarlyStopping(patience=config.patience, verbose=True, delta=config.delta, path_to_cpt=path_to_cpt)
 
     if torch.cuda.is_available():
         model.cuda()
@@ -231,7 +236,3 @@ def train_model(path):
     model.load_state_dict(torch.load('checkpoint.pt'))
 
     return  model, avg_train_losses, avg_val_losses, train_losses_plot, val_accuracies_plot, val_losses_plot, epoch_f1
-
-
-if __name__ == '__main__':
-    train_model('train_sample.csv')

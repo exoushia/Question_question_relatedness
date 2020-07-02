@@ -60,7 +60,7 @@ class Preprocessing():
         self.df = pd.read_csv(path,usecols=cols_to_include)
         f = open('Cleaners.pickle','rb') 
         loaded_obj = pickle.load(f)
-        f.close()        
+        f.close()   
         self.target_col = target_col
         self.punctuation_remove = loaded_obj['punctuations']
         self.misspelt_words = loaded_obj['mispell_dict']
@@ -146,6 +146,7 @@ class Bilstm_Dataset(Dataset):
     def __getitem__(self, index):
         return self.feats[index],self.target[index]
 
+
 class forming_batches():
   def __init__(self,vocab,trimsize_to_col_dict,df,target,vocab_new=True):
     self.mapping_trimsize = trimsize_to_col_dict
@@ -202,22 +203,3 @@ class forming_batches():
     print("dtype ", type(self.df['q1_Title'].iloc[2]))
     
     return self.df , self.vocab
-    
-class Config(object):
-    embed_size = 300
-    hidden_layers = 1
-    hidden_size = 128
-    bidirectional = True
-    output_size = 4
-    epochs = 25
-    lr = 0.001
-    ll_hidden_size=50 #Linear layer hidden sizes
-    batch_size = 32
-    # max_sen_len = 20 # Sequence length for RNN
-    dropout_keep = 0.2
-    sample = 1
-    split_ratio =0.4
-    loss_fn = nn.CrossEntropyLoss()
-    patience=25
-    delta=0.00
-    batch_size_test = None

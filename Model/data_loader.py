@@ -161,7 +161,7 @@ class forming_batches():
               self.vocab.addSentence(i.lower())
         print("Vocabulary formed ! ")
     else:
-        print("Using existing library! ")
+        print("Using existing Vocab object! ")
     
   def extracting_indices(self,vocab, sentence):
     return [vocab.word2index[word] for word in sentence.split(' ')] #need to remove '.' also 

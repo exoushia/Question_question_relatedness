@@ -39,54 +39,120 @@ def data_loading(train_path, val_path, preprocess, target, config, rest_col=['id
                                                         'q1_AnswersBody','q2_Title','q2_Body','q2_AcceptedAnswerBody',
                                                         'q2_AnswersBody'], 
                                                          mapping_trimsize = {'q1_Title':10,'q1_Body':60,'answer_text1':180,'q2_Title':10,'q2_Body':60,'answer_text2':180} ):
+	if val_path is None:
+        if preprocess:
+            print(rest_col.append(target))
+            preprocess_class = Preprocessing(train_path,target)
+        df, new_cols = preprocess_class.run()        
+        else:
+            df = pd.read_csv(train_path, usecols=rest_col.append(target))
+        
+        vocab_obj  = Vocab('stack')
+        
+        batchify_obj = forming_batches(vocab_obj,mapping_trimsize,df,target)
 
-    if preprocess:
-        print(rest_col.append(target))
-        preprocess_class = Preprocessing(train_path,target)
-        df, new_cols = preprocess_class.run()
+        df2 , vocab_obj = batchify_obj.run()
+        print(df2.head())
+
+        print("\n\n Sequence of columns : ")
+        rest_col = [col for col in list(df2.columns) if col not in ['id']]
+        print(rest_col[0:2].append(rest_col[-1]))
+        dataset_title = Bilstm_Dataset(df2,rest_col[0:2], rest_col[-1])
+        dataset_body = Bilstm_Dataset(df2,rest_col[2:4], rest_col[-1])
+        dataset_answer = Bilstm_Dataset(df2,rest_col[4:6], rest_col[-1])
+
+        NUM_INSTANCES = dataset_title.__len__()
+        NUM_INSTANCES = NUM_INSTANCES*config.sample
+        TEST_SIZE = int(NUM_INSTANCES * config.split_ratio)
+
+        num_batches_train = (NUM_INSTANCES-TEST_SIZE)/config.batch_size
+        num_batches_val = TEST_SIZE/config.batch_size
+
+        indices = list(range(NUM_INSTANCES))
+
+        val_idx = np.random.choice(indices, size = TEST_SIZE, replace = False)
+        train_idx = list(set(indices) - set(val_idx))
+        train_sampler, val_sampler = SubsetRandomSampler(train_idx), SubsetRandomSampler(val_idx)
+
+        train_loader_title = DataLoader(dataset_title, batch_size = config.batch_size, sampler = train_sampler)
+        val_loader_title = DataLoader(dataset_title, batch_size = config.batch_size, sampler = val_sampler)
+
+        train_loader_body = DataLoader(dataset_body, batch_size = config.batch_size, sampler = train_sampler)
+        val_loader_body = DataLoader(dataset_body, batch_size = config.batch_size, sampler = val_sampler)
+
+        train_loader_ans = DataLoader(dataset_answer, batch_size = config.batch_size, sampler = train_sampler)
+        val_loader_ans = DataLoader(dataset_answer, batch_size = config.batch_size, sampler = val_sampler)
+
+        train_loaders = [train_loader_title,train_loader_body,train_loader_ans]
+        val_loaders = [val_loader_title,val_loader_body,val_loader_ans]
+
+        return train_loaders , val_loaders, config, vocab_obj, int(num_batches_train), int(num_batches_val)
     else:
-        df = pd.read_csv(train_path, usecols=rest_col.append(target))
+        if preprocess:
+            print(rest_col.append(target))
+            preprocess_class = Preprocessing(train_path,target)
+            df, new_cols = preprocess_class.run()  
 
-    vocab_obj  = Vocab('stack')
-    
-    batchify_obj = forming_batches(vocab_obj,mapping_trimsize,df,target)
+            preprocess_class_val = Preprocessing(val_path,target)
+            df_val, new_cols = preprocess_class.run()        
+      
+        else:
+            df = pd.read_csv(train_path, usecols=rest_col.append(target))
+            df_val = pd.read_csv(train_path, usecols=rest_col.append(target))
+        
+        vocab_obj  = Vocab('stack')
 
-    df2 , vocab_obj = batchify_obj.run()
-    print(df2.head())
+        batchify_obj = forming_batches(vocab_obj,mapping_trimsize,df,target,vocab_new=True)
+        df , vocab_obj = batchify_obj.run()
 
-    print("\n\n Sequence of columns : ")
-    rest_col = [col for col in list(df2.columns) if col not in ['id']]
-    print(rest_col[0:2].append(rest_col[-1]))
-    dataset_title = Bilstm_Dataset(df2,rest_col[0:2], rest_col[-1])
-    dataset_body = Bilstm_Dataset(df2,rest_col[2:4], rest_col[-1])
-    dataset_answer = Bilstm_Dataset(df2,rest_col[4:6], rest_col[-1])
+        batchify_obj_val = forming_batches(vocab_obj,mapping_trimsize,df_val,target,vocab_new=True)
+        df_val , vocab_obj = batchify_obj.run()
 
-    NUM_INSTANCES = dataset_title.__len__()
-    NUM_INSTANCES = NUM_INSTANCES*config.sample
-    TEST_SIZE = int(NUM_INSTANCES * config.split_ratio)
 
-    num_batches_train = (NUM_INSTANCES-TEST_SIZE)/config.batch_size
-    num_batches_val = TEST_SIZE/config.batch_size
+        print(df.head())
 
-    indices = list(range(NUM_INSTANCES))
+        print("\n\n Sequence of columns : ")
+        rest_col = [col for col in list(df.columns) if col not in ['id']]
+        print(rest_col)
 
-    test_idx = np.random.choice(indices, size = TEST_SIZE, replace = False)
-    train_idx = list(set(indices) - set(test_idx))
-    train_sampler, test_sampler = SubsetRandomSampler(train_idx), SubsetRandomSampler(test_idx)
+        dataset_title = Bilstm_Dataset(df,rest_col[0:2], rest_col[-1])
+        dataset_body = Bilstm_Dataset(df,rest_col[2:4], rest_col[-1])
+        dataset_answer = Bilstm_Dataset(df,rest_col[4:6], rest_col[-1])
 
-    train_loader_title = DataLoader(dataset_title, batch_size = config.batch_size, sampler = train_sampler)
-    test_loader_title = DataLoader(dataset_title, batch_size = config.batch_size, sampler = test_sampler)
+        dataset_title_val = Bilstm_Dataset(df_val,rest_col[0:2], rest_col[-1])
+        dataset_body_val = Bilstm_Dataset(df_val,rest_col[2:4], rest_col[-1])
+        dataset_answer_val = Bilstm_Dataset(df_val,rest_col[4:6], rest_col[-1])
 
-    train_loader_body = DataLoader(dataset_body, batch_size = config.batch_size, sampler = train_sampler)
-    test_loader_body = DataLoader(dataset_body, batch_size = config.batch_size, sampler = test_sampler)
+        NUM_INSTANCES_TRAIN = dataset_title.__len__()
+        NUM_INSTANCES_TRAIN = NUM_INSTANCES_TRAIN*config.sample
+        NUM_INSTANCES_VAL = dataset_title_val.__len__()
+        NUM_INSTANCES_VAL = NUM_INSTANCES_VAL*config.sample
 
-    train_loader_ans = DataLoader(dataset_answer, batch_size = config.batch_size, sampler = train_sampler)
-    test_loader_ans = DataLoader(dataset_answer, batch_size = config.batch_size, sampler = test_sampler)
+        num_batches_train = (NUM_INSTANCES_TRAIN)/config.batch_size
+        num_batches_val = NUM_INSTANCES_VAL/config.batch_size
 
-    train_loaders = [train_loader_title,train_loader_body,train_loader_ans]
-    test_loaders = [test_loader_title,test_loader_body,test_loader_ans]
+        indices_train = list(range(NUM_INSTANCES_TRAIN))
+        indices_val = list(range(NUM_INSTANCES_VAL))
 
-    return train_loaders , test_loaders, config, vocab_obj, int(num_batches_train), int(num_batches_val)
+        val_idx = np.random.choice(indices_val, size = NUM_INSTANCES_VAL, replace = False)
+        train_idx = np.random.choice(indices_train, size = NUM_INSTANCES_TRAIN, replace = False)
+        train_sampler, val_sampler = SubsetRandomSampler(train_idx), SubsetRandomSampler(val_idx)
+
+        train_loader_title = DataLoader(dataset_title, batch_size = config.batch_size, sampler = train_sampler)
+        val_loader_title = DataLoader(dataset_title_val, batch_size = config.batch_size, sampler = val_sampler)
+
+        train_loader_body = DataLoader(dataset_body, batch_size = config.batch_size, sampler = train_sampler)
+        val_loader_body = DataLoader(dataset_body_val, batch_size = config.batch_size, sampler = val_sampler)
+
+        train_loader_ans = DataLoader(dataset_answer, batch_size = config.batch_size, sampler = train_sampler)
+        val_loader_ans = DataLoader(dataset_answer_val, batch_size = config.batch_size, sampler = val_sampler)
+
+        train_loaders = [train_loader_title,train_loader_body,train_loader_ans]
+        val_loaders = [val_loader_title,val_loader_body,val_loader_ans]
+
+        return train_loaders , val_loaders, config, vocab_obj, int(num_batches_train), int(num_batches_val)
+
+
 
 
 def evaluate_model(model, val_loader,num_batches_val):
@@ -175,15 +241,19 @@ def run_epoch(model, train_loader, val_loader, epoch, num_batches_train, num_bat
     return train_losses, val_losses, val_accuracies , f1
 
 
-def train_model(path_to_data, train_file, val_file, test_file, path_to_glove, path_to_cpt, config):
+def train_model(path_to_data, train_file, val_file, test_file, path_to_glove, path_to_cpt, config,preprocess=False):
+	
 
     np.random.seed(777)   # for reproducibility
-
 	train_path = path_to_data + '/' + train_file
-	val_path = path_to_data + '/' + val_file
+	if val_path is None : 
+		val_file = None
+	else : 
+		val_path = path_to_data + '/' + val_file
+		
 	test_path = path_to_data + '/' + test_file
 
-    train_loaders, val_loaders, vocab, num_batches_train, num_batches_val = data_loading(train_path, val_path, preprocess=True, target='class', config=config)
+    train_loaders, val_loaders, vocab, num_batches_train, num_batches_val = data_loading(train_path, val_path, preprocess, target='class', config=config)
 
     best_val_loss = float("inf")
 
@@ -233,6 +303,6 @@ def train_model(path_to_data, train_file, val_file, test_file, path_to_glove, pa
     print("\n\n Training Time : {:5.2f} secs".format(end_of_training-start_of_training))
        
     # load the last checkpoint with the best model  
-    model.load_state_dict(torch.load('checkpoint.pt'))
+    model.load_state_dict(torch.load(path_to_cpt))
 
     return  model, avg_train_losses, avg_val_losses, train_losses_plot, val_accuracies_plot, val_losses_plot, epoch_f1

@@ -6,6 +6,7 @@ import sys
 import numpy as np
 import pickle
 import matplotlib.pyplot as plt
+from gensim.models import KeyedVectors
 
 from Model.network_architecture import BiLSTM, EarlyStopping
 from Model/data_loader import *
@@ -16,9 +17,10 @@ def embeddings_gen(vocab, path_to_glove):
     weights_matrix = np.zeros((matrix_len+1, 300))
     words_found = 0
 
-    infile = open(path_to_glove,'rb')
-    glove = pickle.load(infile)
-    infile.close()
+#     infile = open(path_to_glove,'rb')
+#     glove = pickle.load(infile)
+#     infile.close()
+	glove = KeyedVectors.load_word2vec_format(path_to_glove, binary=false)
 
     for index in vocab.index2word:
         if index==0:

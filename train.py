@@ -5,6 +5,7 @@ import time
 import sys
 import numpy as np
 import pickle
+import matplotlib.pyplot as plt
 
 from Model.network_architecture import BiLSTM, EarlyStopping
 from Model/data_loader import *

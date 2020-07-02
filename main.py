@@ -22,7 +22,6 @@ class Config(object):
     patience=25
     delta=0.001
     batch_size_test = None
-    
 
 
 if __name__ == '__main__':
@@ -44,14 +43,9 @@ if __name__ == '__main__':
 	title = "Test Set"
 
  	model, avg_train_losses, avg_val_losses, train_losses_plot, val_accuracies_plot, val_losses_plot, epoch_f1, vocab = train_model(path_to_data, train_file, val_file, test_file, path_to_glove, path_to_cpt, config, to_preprocess)
-	
 	plot_results(train_losses_plot,val_losses_plot,val_accuracies_plot,figname,smooth)
 	
 	test_loss , test_acc , maintaining_F1 = run_test(test_path,preprocess,vocab,model,target='class')
 	
 	#Only for Test rn - we can modify later 
 	print_classification_report(maintaining_F1,title,target_names,save_result_path)
-	
-	
-	
-	

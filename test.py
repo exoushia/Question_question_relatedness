@@ -16,16 +16,16 @@ def run_test(path,preprocess,vocab,model,target='class',rest_col=['id','q1_Title
         df_test = pd.read_csv(path,usecols=rest_col.append(target))
     
     batchify_obj = forming_batches(vocab,mapping_trimsize,df_test,target,vocab_new=False)
-    df2_test , vocab_obj = batchify_obj.run()
+    df_test , vocab_obj = batchify_obj.run()
 
     print("Initial Preprocessing completed! \n")
 
     print("\n\n Sequence of columns in Test Set: ")
-    rest_col = [col for col in list(df2_test.columns) if col not in ['id']]
+    rest_col = [col for col in list(df_test.columns) if col not in ['id']]
     print(rest_col)
-    dataset_title = Bilstm_Dataset(df2_test,rest_col[0:2], rest_col[-1])
-    dataset_body = Bilstm_Dataset(df2_test,rest_col[2:4], rest_col[-1])
-    dataset_answer = Bilstm_Dataset(df2_test,rest_col[4:6], rest_col[-1])
+    dataset_title = Bilstm_Dataset(df_test,rest_col[0:2], rest_col[-1])
+    dataset_body = Bilstm_Dataset(df_test,rest_col[2:4], rest_col[-1])
+    dataset_answer = Bilstm_Dataset(df_test,rest_col[4:6], rest_col[-1])
 
     TEST_SIZE = len(df2_test)
     #If the batch size is none, it means no need to form batches in test ie batch size = total test size
@@ -46,6 +46,12 @@ def run_test(path,preprocess,vocab,model,target='class',rest_col=['id','q1_Title
 
     print("Starting Evaluation on Test.. \n\n")
     test_loss , test_acc , maintaining_F1 = evaluate_model(model, test_loaders, num_batches_test)
+    print("DEBUG \n")
+    print("The loss from test set \n")
+    print(test_loss)
+    print("The F1 scores from test set \n")
+    print(maintaining_F1)
+    
     print("Ending Evaluation on Test.. \n\n")
 
     return test_loss , test_acc , maintaining_F1

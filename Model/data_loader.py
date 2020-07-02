@@ -147,17 +147,21 @@ class Bilstm_Dataset(Dataset):
         return self.feats[index],self.target[index]
 
 class forming_batches():
-  def __init__(self,vocab,trimsize_to_col_dict,df,target):
+  def __init__(self,vocab,trimsize_to_col_dict,df,target,vocab_new=True):
     self.mapping_trimsize = trimsize_to_col_dict
     self.df = df
     self.target = target
     self.vocab = vocab
-    for column in list(self.df.columns):
-      if column == self.target or column =='id': continue
-      for item in self.df[column]:
-        for i in item.split('.'):
-          self.vocab.addSentence(i.lower())
-    print("Vocabulary formed ! ")
+    
+    if vocab_new :
+        for column in list(self.df.columns):
+          if column == self.target or column =='id': continue
+          for item in self.df[column]:
+            for i in item.split('.'):
+              self.vocab.addSentence(i.lower())
+        print("Vocabulary formed ! ")
+    else:
+        print("Using existing library! ")
     
   def extracting_indices(self,vocab, sentence):
     return [vocab.word2index[word] for word in sentence.split(' ')] #need to remove '.' also 

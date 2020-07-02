@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from sklearn.metrics import classification_report , multilabel_confusion_matrix , precision_recall_fscore_support
 
 class plot_results():
     #Instantiation of class
@@ -74,3 +75,30 @@ class plot_results():
             plt.show()
         
         print("All graphs plotted! \n\n")
+        
+ 
+def print_classification_report(F1_list,title,target_names=['class 0', 'class 1', 'class 2','class 3'],save_result_path="Expt_results/results.csv"):
+    y_pred = np.array([x for x,y in F1_list])
+    y_true = np.array([y for x,y in F1_list])
+    str_title = "Printing Classification Report : " + title + " \n\n"
+    print(str_title)
+    report = classification_report(y_true, y_pred, target_names=target_names)
+    df = pd.DataFrame(report)
+    df.to_csv(save_result_path)
+    print(report)
+    
+    str_title = "\n\n Printing Multilabel Confusion Matrix : " + title + " \n\n"
+    print(str_title)
+    print(multilabel_confusion_matrix(y_true, y_pred))
+    
+    str_title = "Printing Micro averaged scores : " + title + " \n\n"
+    print(str_title)
+    print(precision_recall_fscore_support(y_true, y_pred,average='micro'))
+    print("\n")
+    
+    print("\n All Results Printed !! \n")
+    
+
+
+
+    

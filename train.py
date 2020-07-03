@@ -20,7 +20,7 @@ def embeddings_gen(vocab, path_to_glove):
 #     infile = open(path_to_glove,'rb')
 #     glove = pickle.load(infile)
 #     infile.close()
-	glove = KeyedVectors.load_word2vec_format(path_to_glove, binary=false)
+	glove = KeyedVectors.load_word2vec_format(path_to_glove, binary=False)
 
 	for index in vocab.index2word:
 		if index==0:
@@ -88,7 +88,7 @@ def data_loading(train_path, val_path, preprocess, target, config, rest_col=['id
 		train_loaders = [train_loader_title,train_loader_body,train_loader_ans]
 		val_loaders = [val_loader_title,val_loader_body,val_loader_ans]
 
-		return train_loaders , val_loaders, config, vocab_obj, int(num_batches_train), int(num_batches_val)
+		return train_loaders , val_loaders, vocab_obj, int(num_batches_train), int(num_batches_val)
 	else:
 		if preprocess:
 			print(rest_col.append(target))
@@ -96,7 +96,7 @@ def data_loading(train_path, val_path, preprocess, target, config, rest_col=['id
 			df, new_cols = preprocess_class.run()  
 
 			preprocess_class_val = Preprocessing(val_path,target)
-			df_val, new_cols = preprocess_class.run()        
+			df_val, new_cols = preprocess_class_val.run()        
 	
 		else:
 			df = pd.read_csv(train_path, usecols=rest_col.append(target))
@@ -108,7 +108,7 @@ def data_loading(train_path, val_path, preprocess, target, config, rest_col=['id
 		df , vocab_obj = batchify_obj.run()
 
 		batchify_obj_val = forming_batches(vocab_obj,mapping_trimsize,df_val,target,vocab_new=True)
-		df_val , vocab_obj = batchify_obj.run()
+		df_val , vocab_obj = batchify_obj_val.run()
 
 
 		print(df.head())
@@ -152,7 +152,7 @@ def data_loading(train_path, val_path, preprocess, target, config, rest_col=['id
 		train_loaders = [train_loader_title,train_loader_body,train_loader_ans]
 		val_loaders = [val_loader_title,val_loader_body,val_loader_ans]
 
-		return train_loaders , val_loaders, config, vocab_obj, int(num_batches_train), int(num_batches_val) 
+		return train_loaders , val_loaders, vocab_obj, int(num_batches_train), int(num_batches_val) 
 
 
 

@@ -97,8 +97,9 @@ class Preprocessing():
 		print("-> Encoding target.../n")
 		label_enc = LabelEncoder()
 		df[self.target_col] = label_enc.fit_transform(df[self.target_col])
+		return df
 
-	def replace_encoding(num):
+	def replace_encoding(self, num):
 		if num==0: return np.array([1,0,0,0]).astype('int64')
 		if num==1: return np.array([0,1,0,0]).astype('int64')
 		if num==2: return np.array([0,0,1,0]).astype('int64')
@@ -119,7 +120,7 @@ class Preprocessing():
 				print("-->Done for - ", cols)
 
 		self.df = self.encoding_target(self.df)
-		self.df[self.target_col] = self.df[self.target_col].apply(lambda x : replace_encoding(int(x)))
+		self.df[self.target_col] = self.df[self.target_col].apply(lambda x : self.replace_encoding(int(x)))
 		
 		self.df['answer_text1'] = self.df['q1_AcceptedAnswerBody'] + self.df['q1_AnswersBody']
 		self.df['answer_text2'] = self.df['q2_AcceptedAnswerBody'] + self.df['q2_AnswersBody']

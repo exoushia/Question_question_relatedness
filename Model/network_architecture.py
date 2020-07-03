@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import tqdm
+import numpy as np
 
 #from data_loader import Config
 

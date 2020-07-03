@@ -1,5 +1,6 @@
 from train import train_model
 from utils import *
+from test import *
 import torch.nn as nn
 from sklearn.metrics import classification_report
 

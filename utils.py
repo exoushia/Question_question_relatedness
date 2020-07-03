@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report , multilabel_confusion_matrix , precision_recall_fscore_support
+from sklearn.metrics.pairwise import cosine_similarity
 
 class plot_results():
     #Instantiation of class
@@ -99,6 +100,20 @@ def print_classification_report(F1_list,title,target_names=['class 0', 'class 1'
     print("\n All Results Printed !! \n")
     
 
+def nearest_word(OOV_word,word_embedding,word2matrix):
+    try:
+        OOV_word_embedding = word_embedding[OOV_word]
+    except KeyError:
+        OOW_word_embedding = np.random.normal(scale=0.6, size=(1,300 ))
+    sim_max = 0
+    for i in range(len(word2matrix)):
+        embedding = word2matrix[i]
+        sim = cosine_similarity(embedding,OOV_word_embedding)
+        if sim > sim_max:
+            sim_max = sim
+            index_of_closest_word = i
+    
+    return index_of_closest_word 
 
 
     

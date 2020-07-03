@@ -104,9 +104,6 @@ class Preprocessing():
 		if num==2: return np.array([0,0,1,0]).astype('int64')
 		if num==3: return np.array([0,0,0,1]).astype('int64')
 
-		df[self.target_col] = df[self.target_col].apply(lambda x : replace_encoding(int(x)))
-		return df
-
 	def run(self,stop_words = []):
 		print("Starting Preprocessing.../n")
 		stop_words = stop_words + list(set(stopwords.words('english')))
@@ -120,8 +117,10 @@ class Preprocessing():
 					filtered_text.append(text[0])
 				self.df[cols] = filtered_text
 				print("-->Done for - ", cols)
-		self.df = self.encoding_target(self.df)
 
+		self.df = self.encoding_target(self.df)
+		self.df[self.target_col] = self.df[self.target_col].apply(lambda x : replace_encoding(int(x)))
+		
 		self.df['answer_text1'] = self.df['q1_AcceptedAnswerBody'] + self.df['q1_AnswersBody']
 		self.df['answer_text2'] = self.df['q2_AcceptedAnswerBody'] + self.df['q2_AnswersBody']
 		self.df = self.df.drop(['q1_AcceptedAnswerBody','q2_AcceptedAnswerBody','q1_AnswersBody','q2_AnswersBody'],axis=1)

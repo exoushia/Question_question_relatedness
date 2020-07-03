@@ -19,7 +19,7 @@ def run_test(path, model, vocab, config, preprocess, target='class',rest_col=['i
     else:
         df_test = pd.read_csv(path,usecols=rest_col.append(target))
     
-    batchify_obj = forming_batches(vocab,mapping_trimsize,df_test,target,vocab_new=False)
+    batchify_obj = forming_batches(vocab,mapping_trimsize,df_test,target,vocab_new=True)
     df_test , vocab_obj = batchify_obj.run()
 
     print("Initial Preprocessing completed! \n")

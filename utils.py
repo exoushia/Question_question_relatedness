@@ -115,5 +115,9 @@ def nearest_word(OOV_word,word_embedding,word2matrix):
     
     return index_of_closest_word 
 
+def save_object(obj, filename):
+    with open(filename, 'wb') as output:  # Overwrites any existing file.
+        pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
+
 
     

@@ -28,7 +28,7 @@ class Config(object):
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
-	parser.add_argument("-path", default='Data', type=str,help="path to data folder")
+	parser.add_argument("-path_to_data", default='Data', type=str,help="path to data folder")
 	parser.add_argument("-path_to_cpt", default='Expt_results/checkpoints/checkpoint.pt',help="Path to where checkpoints will be stored")
 	parser.add_argument("-path_to_glove", default='Data/glove.840B.300d.word2vec.txt',help="Path to word embeddings")
 	parser.add_argument("-model_path", default='',help="Path to the trained model for mode:only test")
@@ -54,7 +54,6 @@ if __name__ == '__main__':
 # 	train_file='train_sample.csv'
 # 	val_file='val_sample.csv'
 # 	test_file='test_sample.csv'
-# 	test_path = path_to_data + '/' + test_file
 # 	path_to_glove='Data/glove.840B.300d.word2vec.txt'
 # 	path_to_cpt='Expt_results/checkpoints/checkpoint.pt'
 # 	save_result_path="Expt_results/results.csv"
@@ -66,13 +65,18 @@ if __name__ == '__main__':
 # 	figname=["Training.png","Validation.png"]
 # 	target_names=['Direct', 'Duplicate', 'Indirect','Isolated']
 # 	title = "Test Set"
+
+	test_path = args.path_to_data + '/' + args.name_test
 	if mode=="train_&_test":
-		model, avg_train_losses, avg_val_losses, train_losses_plot, val_accuracies_plot, val_losses_plot, epoch_f1, vocab = train_model(path_to_data, train_file, val_file, test_file, path_to_glove, path_to_cpt, config, to_preprocess)
-		plot_results(train_losses_plot,val_losses_plot,val_accuracies_plot,figname,smooth)
+		model, avg_train_losses, avg_val_losses, train_losses_plot, val_accuracies_plot, val_losses_plot, epoch_f1, vocab = train_model(args.path_to_data, args.name_train, args.name_val, args.name_test, args.path_to_glove, args.path_to_cpt, config, args.to_preprocess)
+		plot_results(train_losses_plot,val_losses_plot,val_accuracies_plot,args.figname,args.smooth)
 	else if mode == "only_test":
-		model = 
+		model.load_state_dict(torch.load(args.model_path))
+		model.eval()
+
 	
-	test_loss , test_acc , maintaining_F1 = run_test(test_path, model, vocab, config, to_preprocess, target='class')
+	test_loss , test_acc , maintaining_F1 = run_test(test_path, model, vocab, config, args.to_preprocess, target='class')
 	
 	#Only for Test rn - we can modify later 
-	print_classification_report(maintaining_F1,title,target_names,save_result_path)
+	print_classification_report(maintaining_F1,args.title,args.target_names,args.save_result_path)
+	

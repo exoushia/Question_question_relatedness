@@ -3,6 +3,7 @@ from utils import *
 from test import *
 import torch.nn as nn
 from sklearn.metrics import classification_report
+import argparse
 
 
 class Config(object):
@@ -26,25 +27,50 @@ class Config(object):
 
 
 if __name__ == '__main__':
+	parser = argparse.ArgumentParser()
+	parser.add_argument("-path", default='Data', type=str,help="path to data folder")
+	parser.add_argument("-path_to_cpt", default='Expt_results/checkpoints/checkpoint.pt',help="Path to where checkpoints will be stored")
+	parser.add_argument("-path_to_glove", default='Data/glove.840B.300d.word2vec.txt',help="Path to word embeddings")
+	parser.add_argument("-model_path", default='',help="Path to the trained model for mode:only test")
+	parser.add_argument("-save_result_path", default="Expt_results/results.csv",help="Path to save results on test")
 
+	parser.add_argument("-name_train", default='train_sample.csv', help="Name of train file or None")
+	parser.add_argument("-name_val", default=None, help="Name of val file or None: Train will be splitted")
+	parser.add_argument("-name_test", default='train_sample.csv', type=str,help="Name of test file")
+	parser.add_argument("-target_names", default=['Direct', 'Duplicate', 'Indirect','Isolated'], type=list,help="classes")
+	parser.add_argument("-figname", default=["Training.png","Validation.png"], type=list,help="Names of images to be stored, None : if need not be saved")
+	parser.add_argument("-title", default="Test Set", type=str, help="Title of the Results' Report")
+
+
+	parser.add_argument("-mode", default='train_&_test', type=str, choices=['train_&_test','only_test'])
+
+	parser.add_argument("-to_preprocess", default=True, type=bool, help="")
+	parser.add_argument("-smooth", default=False, type=bool, help="")
+
+	
 	config = Config()
+	
+# 	path_to_data='Data'
+# 	train_file='train_sample.csv'
+# 	val_file='val_sample.csv'
+# 	test_file='test_sample.csv'
+# 	test_path = path_to_data + '/' + test_file
+# 	path_to_glove='Data/glove.840B.300d.word2vec.txt'
+# 	path_to_cpt='Expt_results/checkpoints/checkpoint.pt'
+# 	save_result_path="Expt_results/results.csv"
 
-	path_to_data='Data'
-	train_file='train_sample.csv'
-	val_file='val_sample.csv'
-	test_file='test_sample.csv'
-	path_to_glove='Data/glove.840B.300d.word2vec.txt'
-	path_to_cpt='Expt_results/checkpoints/checkpoint.pt'
-	figname=["Training.png","Validation.png"]
-	to_preprocess = True
-	smooth = False
-	test_path = path_to_data + '/' + test_file
-	save_result_path="Expt_results/results.csv"
-	target_names=['Direct', 'Duplicate', 'Indirect','Isolated']
-	title = "Test Set"
+	
+# 	to_preprocess = True
+# 	smooth = False
 
-	model, avg_train_losses, avg_val_losses, train_losses_plot, val_accuracies_plot, val_losses_plot, epoch_f1, vocab = train_model(path_to_data, train_file, val_file, test_file, path_to_glove, path_to_cpt, config, to_preprocess)
-	plot_results(train_losses_plot,val_losses_plot,val_accuracies_plot,figname,smooth)
+# 	figname=["Training.png","Validation.png"]
+# 	target_names=['Direct', 'Duplicate', 'Indirect','Isolated']
+# 	title = "Test Set"
+	if mode=="train_&_test":
+		model, avg_train_losses, avg_val_losses, train_losses_plot, val_accuracies_plot, val_losses_plot, epoch_f1, vocab = train_model(path_to_data, train_file, val_file, test_file, path_to_glove, path_to_cpt, config, to_preprocess)
+		plot_results(train_losses_plot,val_losses_plot,val_accuracies_plot,figname,smooth)
+	else if mode == "only_test":
+		model = 
 	
 	test_loss , test_acc , maintaining_F1 = run_test(test_path, model, vocab, config, to_preprocess, target='class')
 	

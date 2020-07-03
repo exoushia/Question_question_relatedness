@@ -1,6 +1,10 @@
+import pandas as pd
+import numpy as np
+from torch.utils.data import DataLoader, Dataset , SubsetRandomSampler
 
+from Model.data_loader import *
 
-def run_test(path,preprocess,vocab,model,target='class',rest_col=['id','q1_Title','q1_Body','q1_AcceptedAnswerBody',
+def run_test(path, model, vocab, config, preprocess, target='class',rest_col=['id','q1_Title','q1_Body','q1_AcceptedAnswerBody',
                                                         'q1_AnswersBody','q2_Title','q2_Body','q2_AcceptedAnswerBody',
                                                         'q2_AnswersBody'], 
                                                          mapping_trimsize = {'q1_Title':10,'q1_Body':60,'answer_text1':180,'q2_Title':10,'q2_Body':60,'answer_text2':180} ):
@@ -27,7 +31,7 @@ def run_test(path,preprocess,vocab,model,target='class',rest_col=['id','q1_Title
     dataset_body = Bilstm_Dataset(df_test,rest_col[2:4], rest_col[-1])
     dataset_answer = Bilstm_Dataset(df_test,rest_col[4:6], rest_col[-1])
 
-    TEST_SIZE = len(df2_test)
+    TEST_SIZE = len(df_test)
     #If the batch size is none, it means no need to form batches in test ie batch size = total test size
     if config.batch_size_test is None:
         config.batch_size_test = TEST_SIZE

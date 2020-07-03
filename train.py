@@ -10,6 +10,7 @@ from gensim.models import KeyedVectors
 
 from Model.network_architecture import BiLSTM, EarlyStopping
 from Model.data_loader import *
+from utils import *
 
 
 def embeddings_gen(vocab, path_to_glove):
@@ -243,7 +244,7 @@ def run_epoch(model, train_loader, val_loader, epoch, num_batches_train, num_bat
 	return train_losses, val_losses, val_accuracies , f1
 
 
-def train_model(path_to_data, train_file, val_file, test_file, path_to_glove, path_to_cpt, config,preprocess=False):
+def train_model(path_to_data, path_vocab_save, path_embed_matrix_save,train_file, val_file, test_file, path_to_glove, path_to_cpt, config,preprocess=False):
 	
 
 	np.random.seed(777)   # for reproducibility
@@ -259,6 +260,11 @@ def train_model(path_to_data, train_file, val_file, test_file, path_to_glove, pa
 
 	embedding_matrix = embeddings_gen(vocab, path_to_glove)
 	
+	#Saving vocab object and embedding matrix
+	save_object(vocab, path_vocab_save)
+	save_object(embedding_matrix, path_embed_matrix_save)
+	
+		
 	model = BiLSTM(config, len(vocab.word2index), embedding_matrix)
 	optimizer = optim.Adam(model.parameters(), lr=config.lr)
 
@@ -305,4 +311,4 @@ def train_model(path_to_data, train_file, val_file, test_file, path_to_glove, pa
 	# load the last checkpoint with the best model  
 	model.load_state_dict(torch.load(path_to_cpt))
 
-	return  model, avg_train_losses, avg_val_losses, train_losses_plot, val_accuracies_plot, val_losses_plot, epoch_f1,vocab
+	return  model, avg_train_losses, avg_val_losses, train_losses_plot, val_accuracies_plot, val_losses_plot, epoch_f1,vocab,embedding_matrix

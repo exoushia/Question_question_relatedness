@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader, Dataset , SubsetRandomSampler
 
 from Model.data_loader import *
 
-def run_test(path, model, vocab, config, preprocess, target='class',rest_col=['id','q1_Title','q1_Body','q1_AcceptedAnswerBody',
+def run_test(path, model, vocab, embedding_matrix_from_train, config, preprocess, target='class',rest_col=['id','q1_Title','q1_Body','q1_AcceptedAnswerBody',
                                                         'q1_AnswersBody','q2_Title','q2_Body','q2_AcceptedAnswerBody',
                                                         'q2_AnswersBody'], 
                                                          mapping_trimsize = {'q1_Title':10,'q1_Body':60,'answer_text1':180,'q2_Title':10,'q2_Body':60,'answer_text2':180} ):
@@ -19,8 +19,12 @@ def run_test(path, model, vocab, config, preprocess, target='class',rest_col=['i
     else:
         df_test = pd.read_csv(path,usecols=rest_col.append(target))
     
+    print("Before including the test file, the vocab matrix length [Size of total Vocab for only train and dev]:{} \n\n".format(vocab_obj.n_words) )
+    
     batchify_obj = forming_batches(vocab,mapping_trimsize,df_test,target,vocab_new=True)
     df_test , vocab_obj = batchify_obj.run()
+    
+    print("After including the test file, the vocab matrix length [Size of total Vocab]:{} \n\n".format(vocab_obj.n_words) )
 
     print("Initial Preprocessing completed! \n")
 

@@ -24,7 +24,7 @@ class plot_results():
 
     #After instantiating the class, this is the function that needs to be called:    
     def run(self,figure_sep=True):
-        %matplotlib inline
+#        %matplotlib inline
         plt.style.use('classic')
         plt.figure(figsize=(10,8))
         print("Starting to plot figures.... \n\n")

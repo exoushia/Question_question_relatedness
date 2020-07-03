@@ -6,8 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import tqdm
 
-import evaluate
-from data_loader import Config
+#from data_loader import Config
 
 
 class EarlyStopping:

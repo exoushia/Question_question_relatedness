@@ -8,6 +8,7 @@ warnings.filterwarnings("ignore")
 
 
 from sklearn.preprocessing import LabelEncoder
+import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import sent_tokenize
 from nltk.tokenize import word_tokenize
@@ -58,7 +59,7 @@ class Preprocessing():
 														'q2_AnswersBody','class']):
 
 		self.df = pd.read_csv(path,usecols=cols_to_include)
-		f = open('Cleaners.pickle','rb') 
+		f = open('Data/Cleaners.pickle','rb') 
 		loaded_obj = pickle.load(f)
 		f.close()   
 		self.target_col = target_col
@@ -156,10 +157,10 @@ class forming_batches():
 		
 		if vocab_new :
 			for column in list(self.df.columns):
-			  if column == self.target or column =='id': continue
-			  for item in self.df[column]:
-				for i in item.split('.'):
-				  self.vocab.addSentence(i.lower())
+				if column == self.target or column =='id': continue
+				for item in self.df[column]:
+					for i in item.split('.'):
+						self.vocab.addSentence(i.lower())
 			print("Vocabulary formed ! ")
 		else:
 			print("Using existing Vocab object! ")

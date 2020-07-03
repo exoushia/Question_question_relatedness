@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from gensim.models import KeyedVectors
 
 from Model.network_architecture import BiLSTM, EarlyStopping
-from Model/data_loader import *
+from Model.data_loader import *
 
 
 def embeddings_gen(vocab, path_to_glove):
@@ -45,7 +45,7 @@ def data_loading(train_path, val_path, preprocess, target, config, rest_col=['id
 		if preprocess:
 			print(rest_col.append(target))
 			preprocess_class = Preprocessing(train_path,target)
-		df, new_cols = preprocess_class.run()        
+			df, new_cols = preprocess_class.run()        
 		else:
 			df = pd.read_csv(train_path, usecols=rest_col.append(target))
 		
@@ -248,8 +248,8 @@ def train_model(path_to_data, train_file, val_file, test_file, path_to_glove, pa
 
 	np.random.seed(777)   # for reproducibility
 	train_path = path_to_data + '/' + train_file
-	if val_path is None : 
-		val_file = None
+	if val_file is None : 
+		val_path = None
 	else : 
 		val_path = path_to_data + '/' + val_file
 		

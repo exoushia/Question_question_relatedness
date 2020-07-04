@@ -69,27 +69,27 @@ if __name__ == '__main__':
 # 	title = "Test Set"
 	
 	
-	test_path = parser.path_to_data + '/' + parser.name_test
+	test_path = args.path_to_data + '/' + args.name_test
 	if mode=="train_&_test":
 		model, avg_train_losses, avg_val_losses, train_losses_plot, val_accuracies_plot, val_losses_plot, epoch_f1, vocab,embedding_matrix = train_model(args.path_to_data, args.path_vocab_save, args.path_embed_matrix,args.name_train, args.name_val, args.name_test, args.path_to_glove, args.path_to_cpt, config, args.to_preprocess)
 		plot_results(train_losses_plot,val_losses_plot,val_accuracies_plot,args.figname,args.smooth)
 	elif mode == "only_test":
 		#Unloading the best model saved in last session
-		model.load_state_dict(torch.load(parser.model_path))
+		model.load_state_dict(torch.load(args.model_path))
 		model.eval()
 		
 		#unpickling vocab and embed_metrix
-		infile = open(parser.path_vocab_save,'rb')
+		infile = open(args.path_vocab_save,'rb')
 		vocab = pickle.load(infile)
 		infile.close()
 
-		infile = open(parser.path_embed_matrix,'rb')
+		infile = open(args.path_embed_matrix,'rb')
 		embedding_matrix = pickle.load(infile)
 		infile.close()
 
 	
-	test_loss , test_acc , maintaining_F1 = run_test(test_path, model, vocab, embedding_matrix, config, parser.to_preprocess, target='class')
+	test_loss , test_acc , maintaining_F1 = run_test(test_path, model, vocab, embedding_matrix, config, args.to_preprocess, target='class')
 	
 	#Only for Test rn - we can modify later 
-	print_classification_report(maintaining_F1,parser.title,parser.target_names,parser.save_result_path)
+	print_classification_report(maintaining_F1,args.title,args.target_names,args.save_result_path)
 	

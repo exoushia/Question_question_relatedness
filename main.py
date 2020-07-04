@@ -43,7 +43,6 @@ if __name__ == '__main__':
 	parser.add_argument("-figname", default=["Training.png","Validation.png"], type=list,help="Names of images to be stored, None : if need not be saved")
 	parser.add_argument("-title", default="Test Set", type=str, help="Title of the Results' Report")
 
-
 	parser.add_argument("-mode", default='train_&_test', type=str, choices=['train_&_test','only_test'])
 
 	parser.add_argument("-to_preprocess", default=True, type=bool, help="")
@@ -69,27 +68,27 @@ if __name__ == '__main__':
 # 	title = "Test Set"
 	
 	
-	test_path = args.path_to_data + '/' + args.name_test
+	test_path = parser.path_to_data + '/' + parser.name_test
 	if mode=="train_&_test":
-		model, avg_train_losses, avg_val_losses, train_losses_plot, val_accuracies_plot, val_losses_plot, epoch_f1, vocab,embedding_matrix = train_model(args.path_to_data, args.path_vocab_save, args.path_embed_matrix,args.name_train, args.name_val, args.name_test, args.path_to_glove, args.path_to_cpt, config, args.to_preprocess)
-		plot_results(train_losses_plot,val_losses_plot,val_accuracies_plot,args.figname,args.smooth)
-	else if mode == "only_test":
+		model, avg_train_losses, avg_val_losses, train_losses_plot, val_accuracies_plot, val_losses_plot, epoch_f1, vocab,embedding_matrix = train_model(parser.path_to_data, parser.path_vocab_save, parser.path_embed_matrix,parser.name_train, parser.name_val, parser.name_test, parser.path_to_glove, parser.path_to_cpt, config, parser.to_preprocess)
+		plot_results(train_losses_plot,val_losses_plot,val_accuracies_plot,parser.figname,parser.smooth)
+	elif mode == "only_test":
 		#Unloading the best model saved in last session
-		model.load_state_dict(torch.load(args.model_path))
+		model.load_state_dict(torch.load(parser.model_path))
 		model.eval()
 		
 		#unpickling vocab and embed_metrix
-		infile = open(args.path_vocab_save,'rb')
+		infile = open(parser.path_vocab_save,'rb')
 		vocab = pickle.load(infile)
 		infile.close()
 
-		infile = open(args.path_embed_matrix,'rb')
+		infile = open(parser.path_embed_matrix,'rb')
 		embedding_matrix = pickle.load(infile)
 		infile.close()
 
 	
-	test_loss , test_acc , maintaining_F1 = run_test(test_path, model, vocab, embedding_matrix, config, args.to_preprocess, target='class')
+	test_loss , test_acc , maintaining_F1 = run_test(test_path, model, vocab, embedding_matrix, config, parser.to_preprocess, target='class')
 	
 	#Only for Test rn - we can modify later 
-	print_classification_report(maintaining_F1,args.title,args.target_names,args.save_result_path)
+	print_classification_report(maintaining_F1,parser.title,parser.target_names,parser.save_result_path)
 	

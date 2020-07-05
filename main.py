@@ -25,7 +25,7 @@ class Config(object):
 	loss_fn = nn.CrossEntropyLoss()
 	patience = 25
 	delta = 0.001
-	batch_size_test = None
+	batch_size_test = 32
 
 
 if __name__ == '__main__':

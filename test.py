@@ -3,6 +3,7 @@ import numpy as np
 from torch.utils.data import DataLoader, Dataset , SubsetRandomSampler
 
 from Model.data_loader import *
+from train import *
 
 def run_test(path, model, vocab, embedding_matrix_from_train, config, preprocess, target='class',rest_col=['id','q1_Title','q1_Body','q1_AcceptedAnswerBody',
                                                         'q1_AnswersBody','q2_Title','q2_Body','q2_AcceptedAnswerBody',
@@ -19,7 +20,7 @@ def run_test(path, model, vocab, embedding_matrix_from_train, config, preprocess
     else:
         df_test = pd.read_csv(path,usecols=rest_col.append(target))
     
-    print("Before including the test file, the vocab matrix length [Size of total Vocab for only train and dev]:{} \n\n".format(vocab_obj.n_words) )
+    print("Before including the test file, the vocab matrix length [Size of total Vocab for only train and dev]:{} \n\n".format(vocab.n_words) )
     
     batchify_obj = forming_batches(vocab,mapping_trimsize,df_test,target,vocab_new=True)
     df_test , vocab_obj = batchify_obj.run()
@@ -42,7 +43,7 @@ def run_test(path, model, vocab, embedding_matrix_from_train, config, preprocess
 
     num_batches_test =  int((TEST_SIZE)/config.batch_size_test)
 
-    test_idx = np.random.choice(indices, size = TEST_SIZE, replace = False)
+    test_idx = np.random.choice(range(TEST_SIZE), size = TEST_SIZE, replace = False)
     test_sampler = SubsetRandomSampler(test_idx)
 
     test_loader_title = DataLoader(dataset_title, batch_size = config.batch_size_test, sampler = test_sampler)

@@ -70,10 +70,10 @@ if __name__ == '__main__':
 	
 	
 	test_path = args.path_to_data + '/' + args.name_test
-	if mode=="train_&_test":
+	if args.mode=="train_&_test":
 		model, avg_train_losses, avg_val_losses, train_losses_plot, val_accuracies_plot, val_losses_plot, epoch_f1, vocab,embedding_matrix = train_model(args.path_to_data, args.path_vocab_save, args.path_embed_matrix,args.name_train, args.name_val, args.name_test, args.path_to_glove, args.path_to_cpt, config, args.to_preprocess)
 		plot_results(train_losses_plot,val_losses_plot,val_accuracies_plot,args.figname,args.smooth)
-	elif mode == "only_test":
+	elif args.mode == "only_test":
 		#Unloading the best model saved in last session
 		model.load_state_dict(torch.load(args.model_path))
 		model.eval()

@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report , multilabel_confusion_matrix , precision_recall_fscore_support
 from sklearn.metrics.pairwise import cosine_similarity
+import pickle
 
 class plot_results():
     #Instantiation of class

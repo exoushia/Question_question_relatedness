@@ -80,6 +80,8 @@ class plot_results:
 
 def print_classification_report(F1_list, title, target_names=['class 0', 'class 1', 'class 2', 'class 3'],
 								save_result_path="Expt_results/results.csv"):
+	flatten = lambda l: [item for sublist in l for item in sublist]
+	F1_list = flatten(F1_list)
 	y_pred = np.array([x for x, y in F1_list])
 	y_true = np.array([y for x, y in F1_list])
 	str_title = "Printing Classification Report : " + title + " \n\n"

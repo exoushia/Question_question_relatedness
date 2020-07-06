@@ -84,8 +84,8 @@ def print_classification_report(pred_list, title, target_names=['Direct', 'Dupli
 
 	flatten = lambda l: [item for sublist in l for item in sublist]
 	pred_list = flatten(pred_list)
-	y_pred = np.array([x[0] for x in pred_list])
-	y_true = np.array([x[1] for x in pred_list])
+	y_pred = [x[0] for x in pred_list]
+	y_true = [x[1] for x in pred_list]
 	y_pred = flatten(y_pred)
 	y_true = flatten(y_true)
 

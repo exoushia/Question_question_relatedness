@@ -275,14 +275,14 @@ def train_model(path_to_data, path_vocab_save, path_embed_matrix_save, train_fil
 	save_object(vocab, path_vocab_save)
 	save_object(embedding_matrix, path_embed_matrix_save)
 
-	model = BiLSTM(config, len(vocab.word2index), embedding_matrix).to_device(device)
+	model = BiLSTM(config, len(vocab.word2index), embedding_matrix)
 	optimizer = optim.Adam(model.parameters(), lr=config.lr)
 
 	# initialize the early_stopping object
 	early_stopping = EarlyStopping(patience=config.patience, verbose=True, delta=config.delta, path_to_cpt=path_to_cpt)
 
-	# if torch.cuda.is_available():
-	# 	model.cuda()
+	if torch.cuda.is_available():
+		model.cuda()
 
 	model.train()
 

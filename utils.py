@@ -81,8 +81,12 @@ class plot_results:
 
 def print_classification_report(pred_list, title, target_names=['Direct', 'Duplicate', 'Indirect', 'Isolated'],
 								save_result_path="Expt_results/results.csv"):
+
+	flatten = lambda l: [item for sublist in l for item in sublist]
+	pred_list = flatten(pred_list)
 	y_pred = np.array([x[0] for x in pred_list])
 	y_true = np.array([x[1] for x in pred_list])
+
 	str_title = "Printing Classification Report : " + title + " \n\n"
 	print(str_title)
 	report = classification_report(y_true, y_pred, target_names=target_names)

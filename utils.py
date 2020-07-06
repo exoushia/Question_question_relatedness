@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report, multilabel_confusion_matrix, precision_recall_fscore_support
 from sklearn.metrics.pairwise import cosine_similarity
 import pickle
+import numpy as np
 
 
 class plot_results:
@@ -78,10 +79,10 @@ class plot_results:
 		print("All graphs plotted! \n\n")
 
 
-def print_classification_report(F1_list, title, target_names=['class 0', 'class 1', 'class 2', 'class 3'],
+def print_classification_report(pred_list, title, target_names=['Direct', 'Duplicate', 'Indirect', 'Isolated'],
 								save_result_path="Expt_results/results.csv"):
-	y_pred = np.array([x for x, y in F1_list])
-	y_true = np.array([y for x, y in F1_list])
+	y_pred = np.array([x[0] for x in pred_list])
+	y_true = np.array([x[1] for x in pred_list])
 	str_title = "Printing Classification Report : " + title + " \n\n"
 	print(str_title)
 	report = classification_report(y_true, y_pred, target_names=target_names)

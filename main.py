@@ -51,11 +51,19 @@ if __name__ == '__main__':
 	parser.add_argument("-title", default="Test Set", type=str, help="Title of the Results' Report")
 
 	parser.add_argument("-mode", default='train_&_test', type=str, choices=['train_&_test', 'only_test'])
-
+    parser.add_argument('--no-cuda', default=False, action='store_true', help='disables CUDA training')
 	parser.add_argument("-to_preprocess", default=True, type=bool, help="")
 	parser.add_argument("-smooth", default=False, type=bool, help="")
 
 	args = parser.parse_args()
+
+	args.cuda = not args.no_cuda and torch.cuda.is_available()
+	
+	#setting seeds for reproducibility
+	torch.manual_seed(100)
+	if args.cuda:
+		torch.cuda.manual_seed(100)
+	np.random.seed(100)
 
 	config = Config()
 
@@ -94,8 +102,9 @@ if __name__ == '__main__':
 		model.load_state_dict(torch.load(args.model_path))
 		model.eval()
 
-	test_loss, test_acc, maintaining_F1 = run_test(test_path, model, vocab, embedding_matrix, config,
+	torch.cuda.empty_cache()
+	test_loss, test_acc, test_pred_true = run_test(test_path, model, vocab, embedding_matrix, config,
 												   args.to_preprocess, target='class')
 
 	# Only for Test rn - we can modify later
-	print_classification_report(maintaining_F1, args.title, args.target_names, args.save_result_path)
+	print_classification_report(test_pred_true, args.title, args.target_names, args.save_result_path)

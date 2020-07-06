@@ -107,8 +107,8 @@ class BiLSTM(nn.Module):
 		# Output: seq_length * batch_size * hidden_size
 		# last_hidden_state: batch_size * hidden_size
 		# last_cell_state: batch_size * hidden_size
-		lstm_out1, (h_n1, c_n1) = self.lstm(x1)
-		lstm_out2, (h_n2, c_n2) = self.lstm(x2)
+		lstm_out1, (h_n1, c_n1) = self.lstm(x1.cuda())
+		lstm_out2, (h_n2, c_n2) = self.lstm(x2.cuda())
 
 		print("Shape of hidden state is {} before concat".format(h_n1.shape))
 

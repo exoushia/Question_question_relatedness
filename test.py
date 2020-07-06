@@ -26,10 +26,10 @@ def run_test(path, model, vocab, embedding_matrix_from_train, config, preprocess
 			vocab.n_words))
 
 	batchify_obj = forming_batches(vocab, mapping_trimsize, df_test, target, vocab_new=True)
-	df_test, vocab_obj = batchify_obj.run()
+	df_test, vocab = batchify_obj.run()
 
 	print("After including the test file, the vocab matrix length [Size of total Vocab]:{} \n\n".format(
-		vocab_obj.n_words))
+		vocab.n_words))
 
 	print("Initial Preprocessing completed! \n")
 
@@ -57,14 +57,25 @@ def run_test(path, model, vocab, embedding_matrix_from_train, config, preprocess
 	test_loaders = [test_loader_title, test_loader_body, test_loader_ans]
 	print("Dataloaders for test set made! \n")
 
+	del test_loader_title, test_loader_body, test_loader_ans
+	del dataset_title, dataset_body, dataset_answer
+
 	print("Starting Evaluation on Test.. \n\n")
-	test_loss, test_acc, maintaining_F1 = evaluate_model(model, test_loaders, num_batches_test, config.batch_size_test)
+	test_loss, test_acc, pred_true = evaluate_model(model, test_loaders, num_batches_test, config.batch_size_test)
+
 	print("DEBUG \n")
 	print("The loss from test set \n")
 	print(test_loss)
 	print("The F1 scores from test set \n")
-	print(maintaining_F1)
+	print(pred_true)
 
 	print("Ending Evaluation on Test.. \n\n")
 
-	return test_loss, test_acc, maintaining_F1
+	return test_loss, test_acc, pred_true
+
+# F1_list
+# [
+#  [tensor([1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], device='cuda:0'), tensor([3, 0, 0, 0, 1, 1, 1, 0, 1, 2, 1, 3, 1, 2, 2, 2, 3, 0, 1, 1, 2, 1, 1, 2, 1, 2, 3, 0, 3, 0, 3, 3], device='cuda:0')],
+#  [tensor([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], device='cuda:0'), tensor([0, 0, 3, 0, 2, 3, 0, 1, 1, 0, 1, 1, 2, 1, 0, 3, 2, 1, 2, 2, 0, 3, 3, 1,1, 3, 3, 0, 1, 3, 3, 0], device='cuda:0')],
+#  [tensor([1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1], device='cuda:0'), tensor([0, 1, 1, 3, 2, 0, 3, 0, 3, 2, 1, 2, 1, 0, 0, 3, 1, 2, 1, 0, 3, 1, 3, 3, 3, 1, 3, 0, 0, 0, 2, 2], device='cuda:0')]
+#  ]

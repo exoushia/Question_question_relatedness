@@ -86,6 +86,8 @@ def print_classification_report(pred_list, title, target_names=['Direct', 'Dupli
 	pred_list = flatten(pred_list)
 	y_pred = np.array([x[0] for x in pred_list])
 	y_true = np.array([x[1] for x in pred_list])
+	y_pred = flatten(y_pred)
+	y_true = flatten(y_true)
 
 	str_title = "Printing Classification Report : " + title + " \n\n"
 	print(str_title)

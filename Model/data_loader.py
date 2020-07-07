@@ -22,6 +22,11 @@ from torch.utils.data import DataLoader, Dataset, SubsetRandomSampler
 import torch.nn as nn
 import torch.optim as optim
 
+# CUDA for PyTorch
+use_cuda = torch.cuda.is_available()
+device = torch.device("cuda:0" if use_cuda else "cpu")
+torch.backends.cudnn.benchmark = True
+
 
 # Defining the Vocab class to be able to map words to indices and indices to words
 class Vocab:
@@ -133,8 +138,8 @@ class Bilstm_Dataset(Dataset):
 
 	def __init__(self, df, col, target_col):
 		# rest_col = [col for col in rest_col if col not in ['id']]
-		self.feats = torch.tensor(list(df[col].values.tolist()), dtype=torch.long)
-		self.target = torch.tensor(list(df[target_col].values.tolist()), dtype=torch.long)
+		self.feats = torch.as_tensor(list(df[col].values.tolist()), dtype=torch.long, device=device)
+		self.target = torch.as_tensor(list(df[target_col].values.tolist()), dtype=torch.long, device=device)
 		self.nsamples = len(df)
 
 	def __len__(self):

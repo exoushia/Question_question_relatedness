@@ -51,17 +51,14 @@ if __name__ == '__main__':
 	parser.add_argument("-title", default="Test Set", type=str, help="Title of the Results' Report")
 
 	parser.add_argument("-mode", default='train_&_test', type=str, choices=['train_&_test', 'only_test'])
-    parser.add_argument('--no-cuda', default=False, action='store_true', help='disables CUDA training')
-	parser.add_argument("-to_preprocess", default=True, type=bool, help="")
+    parser.add_argument("-to_preprocess", default=True, type=bool, help="")
 	parser.add_argument("-smooth", default=False, type=bool, help="")
 
 	args = parser.parse_args()
-
-	args.cuda = not args.no_cuda and torch.cuda.is_available()
 	
 	#setting seeds for reproducibility
 	torch.manual_seed(100)
-	if args.cuda:
+	if torch.cuda.is_available():
 		torch.cuda.manual_seed(100)
 	np.random.seed(100)
 

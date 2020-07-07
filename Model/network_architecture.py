@@ -68,7 +68,7 @@ class BiLSTM(nn.Module):
 
 		# Layer 1: Word2Vec Embedding.
 		self.embeddings = nn.Embedding(vocab_size, self.config.embed_size)
-		self.embeddings.weight = nn.Parameter(torch.tensor(word_embeddings, dtype=torch.float32), requires_grad=False)
+		self.embeddings.weight = nn.Parameter(torch.as_tensor(word_embeddings, dtype=torch.float32), requires_grad=False)
 
 		# Layer 2: Bidirectional LSTM
 		self.lstm = nn.LSTM(input_size=self.config.embed_size,

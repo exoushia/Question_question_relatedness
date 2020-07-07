@@ -56,6 +56,8 @@ def data_loading(train_path, val_path, preprocess, target, config,
 			print(rest_col.append(target))
 			preprocess_class = Preprocessing(train_path, target)
 			df, new_cols = preprocess_class.run()
+			print(" Writing preprocessed data for future use..")
+			df.to_csv(train_path[:-4] + "_preprocessed.csv")
 		else:
 			df = pd.read_csv(train_path, usecols=rest_col.append(target))
 
@@ -112,9 +114,13 @@ def data_loading(train_path, val_path, preprocess, target, config,
 			preprocess_class_val = Preprocessing(val_path, target)
 			df_val, new_cols = preprocess_class_val.run()
 
+			print(" Writing preprocessed data for future use..")
+			df.to_csv(train_path[:-4] + "_preprocessed.csv")
+			df_val.to_csv(val_path[:-4] + "_preprocessed.csv")
+
 		else:
 			df = pd.read_csv(train_path, usecols=rest_col.append(target))
-			df_val = pd.read_csv(train_path, usecols=rest_col.append(target))
+			df_val = pd.read_csv(val_path, usecols=rest_col.append(target))
 
 		vocab = Vocab('stack')
 
@@ -184,8 +190,8 @@ def evaluate_model(model, loader, num_batches, batch_size):
 		body = next(body_iter)  # ith batch
 		ans = next(ans_iter)  # ith batch
 
-		y_pred = model.calling(title[0], body[0], ans[0], batch_size).cuda()
-		labels = title[1].cuda()
+		y_pred = model.calling(title[0].to(device), body[0].to(device), ans[0].to(device), batch_size)
+		labels = title[1]
 
 		print("Shape of y pred2 {}".format(y_pred.shape))
 		print("Shape of y true2 {}".format(labels.shape))
@@ -223,8 +229,8 @@ def run_train(model, train_loader, val_loader, epoch, num_batches_train, num_bat
 
 		print("Shape of train title iter {}".format(title[0].shape))
 
-		y_pred = model.calling(title[0], body[0], ans[0], batch_size).cuda()
-		y_true = title[1].cuda()
+		y_pred = model.calling(title[0].to(device), body[0].to(device), ans[0].to(device), batch_size)
+		y_true = title[1]
 
 		print("Shape of y pred {}".format(y_pred.shape))
 		print("Shape of y true {}".format(y_true.shape))
@@ -282,7 +288,7 @@ def train_model(path_to_data, path_vocab_save, path_embed_matrix_save, train_fil
 	early_stopping = EarlyStopping(patience=config.patience, verbose=True, delta=config.delta, path_to_cpt=path_to_cpt)
 
 	if torch.cuda.is_available():
-		model.cuda()
+		model.to(device)
 
 	model.train()
 

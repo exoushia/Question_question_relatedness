@@ -3,7 +3,7 @@ from sklearn.metrics import classification_report, multilabel_confusion_matrix, 
 from sklearn.metrics.pairwise import cosine_similarity
 import pickle
 import numpy as np
-
+import pandas as pd
 
 class plot_results:
 	# Instantiation of class
@@ -82,16 +82,17 @@ class plot_results:
 def print_classification_report(pred_list, title, target_names=['Direct', 'Duplicate', 'Indirect', 'Isolated'],
 								save_result_path="Expt_results/results.csv"):
 
-	flatten = lambda l: [item for sublist in l for item in sublist]
-	pred_list = flatten(pred_list)
-	y_pred = [x[0] for x in pred_list]
-	y_true = [x[1] for x in pred_list]
+	flatten = lambda l: np.array([item for sublist in l for item in sublist])
+#	pred_list = flatten(pred_list)
+	print(pred_list)
+	y_pred = np.array([x[0].tolist() for x in pred_list])
+	y_true = np.array([x[1].tolist() for x in pred_list])
 	y_pred = flatten(y_pred)
 	y_true = flatten(y_true)
-
+	print(y_true)
 	str_title = "Printing Classification Report : " + title + " \n\n"
 	print(str_title)
-	report = classification_report(y_true, y_pred, target_names=target_names)
+	report = classification_report(y_true, y_pred, target_names=target_names, output_dict=True)
 	df = pd.DataFrame(report)
 	df.to_csv(save_result_path)
 	print(report)

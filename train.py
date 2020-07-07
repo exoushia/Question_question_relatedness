@@ -240,7 +240,7 @@ def run_train(model, train_loader, val_loader, epoch, num_batches_train, num_bat
 		losses.append(loss.detach().cpu().numpy())
 		optimizer.step()
 
-		if i % 10 == 0:
+		if i % 100 == 0:
 			print("Iter: {},Epoch: {}\n".format(i + 1, epoch))
 			avg_train_loss = np.mean(losses)
 			train_losses.append(avg_train_loss)

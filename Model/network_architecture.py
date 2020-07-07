@@ -117,21 +117,7 @@ class BiLSTM(nn.Module):
 		h_n2 = torch.cat([h_n2[0, :, :], h_n2[1, :, :]], -1).view(batch_size, 2 * self.config.hidden_size)
 
 		print("Shape of hidden state is {} after concat and reshape".format(h_n1.shape))
-
-		# weights = []
-		# for i in range(2*self.config.hidden_size):
-		#   weights.append(self.attn(h_n1))
-		# normalized_weights = F.softmax(torch.cat(weights, 1), 1)
-		# attn_applied = torch.bmm(normalized_weights.unsqueeze(0), h_n1.view(1, 2*self.config.hidden_size, -1))
-		# #If input is a (b×n×m) tensor, mat2 is a (b×m×p) tensor, out will be a (b×n×p)
-
-		# weights2 = []
-		# for i in range(2*self.config.hidden_size):
-		#   weights2.append(self.attn(h_n2))
-		# normalized_weights2 = F.softmax(torch.cat(weights2, 1), 1)
-
-		# attn_applied2 = torch.bmm(normalized_weights2.unsqueeze(0), h_n2.view(1, 2*self.config.hidden_size, -1))
-
+		
 		# shape of hidden state = batch_size,hidden_dimension*2 -> dot product across second dimension
 		# dotproduct = torch.tensor(np.sum(np.multiply(a.numpy(),b.numpy()),axis=1,keepdims=False),dtype=torch.float32)
 		dotproduct = torch.sum(torch.mul(h_n1, h_n2), 1).view(batch_size, -1)

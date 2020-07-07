@@ -250,9 +250,9 @@ def run_train(model, train_loader, val_loader, epoch, num_batches_train, num_bat
 			# Evalute Accuracy on validation set
 			with torch.no_grad():
 				val_loss, val_accuracy, curr_F1 = evaluate_model(model, val_loader, num_batches_val, batch_size)
-				val_accuracies.append(val_accuracy.detach().cpu().numpy())
-				val_losses.append(val_loss.detach().cpu().numpy())
-				f1.append(curr_F1.detach().cpu().numpy())
+				val_accuracies.append(val_accuracy)
+				val_losses.append(val_loss)
+				f1.append(curr_F1)
 
 				print("\tVal Accuracy: {:.4f}\n".format(val_accuracy))
 				print("\n")

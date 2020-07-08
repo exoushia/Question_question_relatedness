@@ -87,7 +87,8 @@ if __name__ == '__main__':
 		model, avg_train_losses, avg_val_losses, train_losses_plot, val_accuracies_plot, val_losses_plot, epoch_f1, vocab, embedding_matrix = train_model(
 			args.path_to_data, args.path_vocab_save, args.path_embed_matrix, args.name_train, args.name_val,
 			args.path_to_glove, args.path_to_cpt, config, args.to_preprocess)
-		plot_results(train_losses_plot, val_losses_plot, val_accuracies_plot, args.figname, args.smooth)
+		plot = plot_results(train_losses_plot, val_losses_plot, val_accuracies_plot, args.figname, args.smooth)
+		plot.run(figure_sep=True)
 	elif args.mode == "only_test":
 		# unpickling vocab and embed_metrix
 		infile = open(args.path_vocab_save, 'rb')

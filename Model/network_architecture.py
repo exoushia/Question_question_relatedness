@@ -40,7 +40,7 @@ class EarlyStopping:
 			self.save_checkpoint(val_loss, model)
 		elif score < self.best_score + self.delta:
 			self.counter += 1
-			print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
+			# print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
 			if self.counter >= self.patience:
 				self.early_stop = True
 		else:
@@ -50,8 +50,8 @@ class EarlyStopping:
 
 	def save_checkpoint(self, val_loss, model):
 		'''Saves model when validation loss decrease.'''
-		if self.verbose:
-			print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
+		# if self.verbose:
+		# 	print(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
 		torch.save(model.state_dict(), self.path)
 		self.val_loss_min = val_loss
 
@@ -110,13 +110,13 @@ class BiLSTM(nn.Module):
 		lstm_out1, (h_n1, c_n1) = self.lstm(x1.cuda())
 		lstm_out2, (h_n2, c_n2) = self.lstm(x2.cuda())
 
-		print("Shape of hidden state is {} before concat".format(h_n1.shape))
+		# print("Shape of hidden state is {} before concat".format(h_n1.shape))
 
 		# Concating both iterations of bilstm
 		h_n1 = torch.cat([h_n1[0, :, :], h_n1[1, :, :]], -1).view(batch_size, 2 * self.config.hidden_size)
 		h_n2 = torch.cat([h_n2[0, :, :], h_n2[1, :, :]], -1).view(batch_size, 2 * self.config.hidden_size)
 
-		print("Shape of hidden state is {} after concat and reshape".format(h_n1.shape))
+		# print("Shape of hidden state is {} after concat and reshape".format(h_n1.shape))
 		
 		# shape of hidden state = batch_size,hidden_dimension*2 -> dot product across second dimension
 		# dotproduct = torch.tensor(np.sum(np.multiply(a.numpy(),b.numpy()),axis=1,keepdims=False),dtype=torch.float32)

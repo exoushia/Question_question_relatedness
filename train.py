@@ -193,8 +193,8 @@ def evaluate_model(model, loader, num_batches, batch_size):
 		y_pred = model.calling(title[0].to(device), body[0].to(device), ans[0].to(device), batch_size)
 		labels = title[1]
 
-		print("Shape of y pred2 {}".format(y_pred.shape))
-		print("Shape of y true2 {}".format(labels.shape))
+		# print("Shape of y pred2 {}".format(y_pred.shape))
+		# print("Shape of y true2 {}".format(labels.shape))
 
 		pred_true.append([torch.argmax(y_pred, 1), torch.argmax(labels, 1)])
 
@@ -227,20 +227,20 @@ def run_train(model, train_loader, val_loader, epoch, num_batches_train, num_bat
 		body = next(body_iter)  # ith batch
 		ans = next(ans_iter)  # ith batch
 
-		print("Shape of train title iter {}".format(title[0].shape))
+		# print("Shape of train title iter {}".format(title[0].shape))
 
 		y_pred = model.calling(title[0].to(device), body[0].to(device), ans[0].to(device), batch_size)
 		y_true = title[1]
 
-		print("Shape of y pred {}".format(y_pred.shape))
-		print("Shape of y true {}".format(y_true.shape))
+		# print("Shape of y pred {}".format(y_pred.shape))
+		# print("Shape of y true {}".format(y_true.shape))
 
 		loss = model.loss(y_pred, torch.argmax(y_true, 1))
 		loss.backward()
 		losses.append(loss.detach().cpu().numpy())
 		optimizer.step()
 
-		if i % 100 == 0:
+		if i % 300 == 0:
 			print("Iter: {},Epoch: {}\n".format(i + 1, epoch))
 			avg_train_loss = np.mean(losses)
 			train_losses.append(avg_train_loss)

@@ -62,6 +62,10 @@ if __name__ == '__main__':
 		torch.cuda.manual_seed(100)
 	np.random.seed(100)
 
+	use_cuda = torch.cuda.is_available()
+	device = torch.device("cuda:0" if use_cuda else "cpu")
+	torch.backends.cudnn.benchmark = True
+
 	config = Config()
 
 	# 	path_to_data='Data'
@@ -95,7 +99,7 @@ if __name__ == '__main__':
 		infile.close()
 
 		# Unloading the best model saved in last session
-		model = BiLSTM(config, len(vocab.word2index), embedding_matrix).cuda()
+		model = BiLSTM(config, len(vocab.word2index), embedding_matrix).to(device)
 		model.load_state_dict(torch.load(args.model_path))
 		model.eval()
 

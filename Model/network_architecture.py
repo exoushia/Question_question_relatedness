@@ -7,6 +7,10 @@ import torch.nn.functional as F
 import tqdm
 import numpy as np
 
+# CUDA for PyTorch
+use_cuda = torch.cuda.is_available()
+device = torch.device("cuda:0" if use_cuda else "cpu")
+torch.backends.cudnn.benchmark = True
 
 class EarlyStopping:
 	"""Early stops the training if validation loss doesn't improve after a given patience."""
@@ -78,9 +82,11 @@ class BiLSTM(nn.Module):
 							bidirectional=True,
 							batch_first=True)
 
-		# Layer 3: Attention Layer
-		# self.attn = nn.Dense(2*self.config.hidden_size, 1)
-
+		#Layer 3: Attention
+		# We will use da = 350, r = 30 & penalization_coeff = 1 as per given in the self-attention original ICLR paper
+		self.W_s1 = nn.Linear(2*config.hidden_size, 350)
+		self.W_s2 = nn.Linear(350, 30)
+		
 		# Layer 4: Rest of the layers
 		self.net = nn.Sequential(nn.Linear(3, self.config.ll_hidden_size), nn.ReLU(), nn.Dropout(p=self.dropout),
 								 nn.Linear(self.config.ll_hidden_size, self.config.output_size), nn.Softmax())
@@ -92,23 +98,83 @@ class BiLSTM(nn.Module):
 	#         torch.nn.init.xavier_uniform(m.weight)
 	#         m.bias.data.fill_(0.01)
 
+	# https://github.com/prakashpandey9/Text-Classification-Pytorch/blob/master/models/selfAttention.py
+	def self_attention_net(self, lstm_output):
+		"""
+		Now we will use self attention mechanism to produce a matrix embedding of the input sentence in which every row represents an
+		encoding of the inout sentence but giving an attention to a specific part of the sentence. We will use 30 such embedding of 
+		the input sentence and then finally we will concatenate all the 30 sentence embedding vectors and connect it to a fully 
+		connected layer of size 2000 which will be connected to the output layer of size 2 returning logits for our two classes i.e., 
+		pos & neg.
+		Arguments
+		---------
+		lstm_output = A tensor containing hidden states corresponding to each time step of the LSTM network.
+		---------
+		Returns : Final Attention weight matrix for all the 30 different sentence embedding in which each of 30 embeddings give
+				  attention to different parts of the input sentence.
+		Tensor size : lstm_output.size() = (batch_size, num_seq, 2*hidden_size)
+					  attn_weight_matrix.size() = (batch_size, 30, num_seq)
+		"""
+		attn_weight_matrix = self.W_s2(F.tanh(self.W_s1(lstm_output)))
+		attn_weight_matrix = attn_weight_matrix.permute(0, 2, 1)
+		attn_weight_matrix = F.softmax(attn_weight_matrix, dim=2)
+
+		return attn_weight_matrix
+
+	# https://github.com/prakashpandey9/Text-Classification-Pytorch/blob/master/models/LSTM_Attn.py
+	def attention_net(self, lstm_output, final_state):
+		""" 
+		Now we will incorporate Attention mechanism in our LSTM model. In this new model, we will use attention to compute soft alignment score corresponding
+		between each of the hidden_state and the last hidden_state of the LSTM. We will be using torch.bmm for the batch matrix multiplication.
+		
+		Arguments
+		---------
+		lstm_output : Final output of the LSTM which contains hidden layer outputs for each sequence.
+		final_state : Final time-step hidden state (h_n) of the LSTM
+
+		---------	
+		Returns : It performs attention mechanism by first computing weights for each of the sequence present in lstm_output and and then finally computing the
+				  new hidden state.
+				  
+		Tensor Size :
+					hidden.size() = (batch_size, hidden_size)
+					attn_weights.size() = (batch_size, seq_len)
+					soft_attn_weights.size() = (batch_size, seq_len)
+					new_hidden_state.size() = (batch_size, hidden_size)
+		"""
+		
+		hidden = final_state
+		attn_weights = torch.bmm(lstm_output, hidden.unsqueeze(2)).squeeze(2)
+		soft_attn_weights = F.softmax(attn_weights, 1)
+		new_hidden_state = torch.bmm(lstm_output.transpose(1, 2), soft_attn_weights.unsqueeze(2)).squeeze(2)
+		
+		return new_hidden_state
+
 	# https://discuss.pytorch.org/t/how-to-correctly-give-inputs-to-embedding-lstm-and-linear-layers/15398/2
 	# https://stackoverflow.com/questions/49466894/how-to-correctly-give-inputs-to-embedding-lstm-and-linear-layers-in-pytorch
 	def forward(self, pairs, batch_size):
-		q1 = torch.stack([x[0] for x in pairs]).cuda()
-		q2 = torch.stack([x[1] for x in pairs]).cuda()
+		q1 = torch.stack([x[0] for x in pairs]).to(device)
+		q2 = torch.stack([x[1] for x in pairs]).to(device)
 
 		# Input: batch_size x seq_length
 		# Output: batch-size x seq_length x embedding_dimension
 		x1 = self.embeddings(q1)
 		x2 = self.embeddings(q2)
 
-		# Input: seq_length * batch_size * input_size (embedding_dimension in this case)
-		# Output: seq_length * batch_size * hidden_size
-		# last_hidden_state: batch_size * hidden_size
-		# last_cell_state: batch_size * hidden_size
-		lstm_out1, (h_n1, c_n1) = self.lstm(x1.cuda())
-		lstm_out2, (h_n2, c_n2) = self.lstm(x2.cuda())
+		# Input: (batch_size, seq_length, input_size) (input_size=embedding_dimension in this case)
+		# Output: (batch_size, seq_length, 2*hidden_size) (batch_size is dim0 since batch_first is true)
+		# last_hidden_state: (2 * batch_size, hidden_size)  (2 due to bidirectional, otherwise would be 1)
+		# last_cell_state: (2 * batch_size, hidden_size)    (2 due to bidirectional, otherwise would be 1)
+		lstm_out1, (h_n1, c_n1) = self.lstm(x1.to(device))
+		lstm_out2, (h_n2, c_n2) = self.lstm(x2.to(device))
+
+		#Self Attention
+		attn_weight_matrix1 = self.self_attention_net(lstm_out1)
+		attn_weight_matrix2 = self.self_attention_net(lstm_out2)
+		# attn_weight_matrix: (batch_size, r, seq_len)
+		hidden_matrix1 = torch.bmm(attn_weight_matrix1, lstm_out1)
+		hidden_matrix2 = torch.bmm(attn_weight_matrix2, lstm_out2)
+		# hidden_matrix: (batch_size, r, 2*hidden_size)
 
 		# print("Shape of hidden state is {} before concat".format(h_n1.shape))
 
@@ -116,14 +182,16 @@ class BiLSTM(nn.Module):
 		h_n1 = torch.cat([h_n1[0, :, :], h_n1[1, :, :]], -1).view(batch_size, 2 * self.config.hidden_size)
 		h_n2 = torch.cat([h_n2[0, :, :], h_n2[1, :, :]], -1).view(batch_size, 2 * self.config.hidden_size)
 
+		# Attention
+		attn_h_n1 = self.attention_net(lstm_out1, h_n1)
+		attn_h_n2 = self.attention_net(lstm_out1, h_n2)
+
 		# print("Shape of hidden state is {} after concat and reshape".format(h_n1.shape))
 		
-		# shape of hidden state = batch_size,hidden_dimension*2 -> dot product across second dimension
-		# dotproduct = torch.tensor(np.sum(np.multiply(a.numpy(),b.numpy()),axis=1,keepdims=False),dtype=torch.float32)
-		dotproduct = torch.sum(torch.mul(h_n1, h_n2), 1).view(batch_size, -1)
-		# Shape of h_n1 => batch_size,hidden_dim*2
+		# shape of hidden state = batch_size,2*hidden_size -> dot product across second dimension
+		dotproduct = torch.sum(torch.mul(attn_h_n1, attn_h_n2), 1).view(batch_size, -1)
+		# Shape of h_n1 => batch_size,2*hidden_size
 
-		# print(dotproduct.shape)  #32x1
 		return dotproduct
 
 	def calling(self, t, b, a, batch_size):

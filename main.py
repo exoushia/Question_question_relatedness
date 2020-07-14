@@ -51,7 +51,7 @@ if __name__ == '__main__':
 	parser.add_argument("-title", default="Test Set", type=str, help="Title of the Results' Report")
 
 	parser.add_argument("-mode", default='train_&_test', type=str, choices=['train_&_test', 'only_test'])
-	parser.add_argument("-to_preprocess", default=True, type=bool, help="")
+	parser.add_argument("-to_preprocess", default=False, type=bool, help="")
 	parser.add_argument("-smooth", default=False, type=bool, help="")
 
 	args = parser.parse_args()
@@ -65,9 +65,10 @@ if __name__ == '__main__':
 	use_cuda = torch.cuda.is_available()
 	device = torch.device("cuda:0" if use_cuda else "cpu")
 	torch.backends.cudnn.benchmark = True
-
+#	device="cpu"
 	config = Config()
-
+	print("Preprocess")
+	print(args.to_preprocess)
 	# 	path_to_data='Data'
 	# 	train_file='train_sample.csv'
 	# 	val_file='val_sample.csv'
@@ -88,7 +89,7 @@ if __name__ == '__main__':
 			args.path_to_data, args.path_vocab_save, args.path_embed_matrix, args.name_train, args.name_val,
 			args.path_to_glove, args.path_to_cpt, config, args.to_preprocess)
 		plot = plot_results(train_losses_plot, val_losses_plot, val_accuracies_plot, args.figname, args.smooth)
-		plot.run(figure_sep=True)
+#		plot.run(figure_sep=True)
 	elif args.mode == "only_test":
 		# unpickling vocab and embed_metrix
 		infile = open(args.path_vocab_save, 'rb')

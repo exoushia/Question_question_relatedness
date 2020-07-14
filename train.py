@@ -59,7 +59,8 @@ def data_loading(train_path, val_path, preprocess, target, config,
 			print(" Writing preprocessed data for future use..")
 			df.to_csv(train_path[:-4] + "_preprocessed.csv")
 		else:
-			df = pd.read_csv(train_path, usecols=rest_col.append(target))
+			rest_col=["id", "q1_Title", "q2_Title", "q1_Body", "q2_Body", "answer_text1", "answer_text2", "class"]
+			df = pd.read_csv(train_path, usecols=rest_col)
 
 		vocab = Vocab('stack')
 
@@ -119,8 +120,9 @@ def data_loading(train_path, val_path, preprocess, target, config,
 			df_val.to_csv(val_path[:-4] + "_preprocessed.csv")
 
 		else:
-			df = pd.read_csv(train_path, usecols=rest_col.append(target))
-			df_val = pd.read_csv(val_path, usecols=rest_col.append(target))
+			rest_col=["id", "q1_Title", "q2_Title", "q1_Body", "q2_Body", "answer_text1", "answer_text2", "class"]			
+			df = pd.read_csv(train_path, usecols=rest_col)
+			df_val = pd.read_csv(val_path, usecols=rest_col)
 
 		vocab = Vocab('stack')
 

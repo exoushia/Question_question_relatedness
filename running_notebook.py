@@ -1,3 +1,4 @@
+#----------------------------------------------READING LIB --------------------------------------------
 import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report, multilabel_confusion_matrix, precision_recall_fscore_support
 from sklearn.metrics.pairwise import cosine_similarity
@@ -37,7 +38,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 
 
-
+#--------------------------config class --------------------------------
 class Config(object):
 	embed_size = 300
 	hidden_layers = 1
@@ -57,7 +58,7 @@ class Config(object):
 	delta = 0.001
 	batch_size_test = 32
   
- #UTILITIES:
+#-----------------------------------------------UTILITIES----------------------------:
 class plot_results:
 	# Instantiation of class
 	def __init__(self, train_losses_plot, val_losses_plot, val_accuracies_plot,
@@ -182,7 +183,7 @@ def save_object(obj, filename):
 	with open(filename, 'wb') as output:  # Overwrites any existing file.
 		pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
     
-#MODEL ARCHITECTURE
+#-----------------------------------------------------MODEL ARCHITECTURE-----------------------------:
 
 class EarlyStopping:
 	"""Early stops the training if validation loss doesn't improve after a given patience."""
@@ -378,7 +379,7 @@ class BiLSTM(nn.Module):
 		return output.view(-1, self.config.output_size)
 
 
-#PREPROCESS
+#-----------------------------------------------------PREPROCESSING <DATA LOADERS>-------------------------------------------
 
 # Defining the Vocab class to be able to map words to indices and indices to words
 class Vocab:
@@ -560,7 +561,7 @@ class forming_batches:
 
 
 
-#TRAIN
+#-----------------------------------------------------TRAIN---------------------------------------------:
 def embeddings_gen(vocab, path_to_glove):
 	matrix_len = len(vocab.word2index)
 	weights_matrix = np.zeros((matrix_len + 1, 300))
@@ -875,7 +876,7 @@ def train_model(path_to_data, path_vocab_save, path_embed_matrix_save, train_fil
 
 	return model, avg_train_losses, avg_val_losses, train_losses_plot, val_accuracies_plot, val_losses_plot, epoch_f1, vocab, embedding_matrix
 
-
+#-----------------------------------------------------------The MAIN CODE TO RUN---------------------------------------:
 
 #Arguments for path and other boolean values: <Can be changed for running on colab/kaggle>
 path_to_data     = Data
@@ -900,6 +901,7 @@ if torch.cuda.is_available():
   torch.cuda.manual_seed(100)
 np.random.seed(100)
 
+#-------------------------------------------CUDA <might be a need to define above>---------------------------:
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda:0" if use_cuda else "cpu")
 torch.backends.cudnn.benchmark = True
@@ -936,4 +938,5 @@ test_loss, test_acc, test_pred_true = run_test(test_path, model, vocab, embeddin
 # Only for Test rn - we can modify later
 print_classification_report(test_pred_true, args.title, args.target_names, args.save_result_path)
 
+#-----------------------------------------------------END------------------------------------------
 

@@ -31,10 +31,10 @@ class plot_results:
 	def run(self, figure_sep=True):
 		#        %matplotlib inline
 		plt.style.use('classic')
-		plt.figure(figsize=(10, 8))
+		fig = plt.figure(figsize=(10, 8))
 		print("Starting to plot figures.... \n\n")
 		if figure_sep:
-			fig, ax = plt.subplot(2, 1, 1)
+			ax = plt.subplot(2, 1, 1)
 			ax.plot(self.train_losses_plot)
 			if self.smooth:
 				title_str = 'Average training loss for every Epoch'
@@ -46,7 +46,7 @@ class plot_results:
 				fig.savefig(self.figname[0])
 			plt.show()
 
-			fig, ax = plt.subplot(2, 1, 2)
+			ax = plt.subplot(2, 1, 2)
 			ax.plot(self.val_losses_plot, color='blue')
 			ax.plot(self.val_accuracies_plot, color='green')
 			ax.legend(['Val losses', 'Val Accuracies'], loc='best')
@@ -61,7 +61,7 @@ class plot_results:
 			plt.show()
 
 		else:
-			fig, ax = plt.subplot(2, 1, 2)
+			ax = plt.subplot(2, 1, 2)
 			ax.plot(self.train_losses_plot, color='red')
 			ax.plot(self.val_losses_plot, color='blue')
 			ax.plot(self.val_accuracies_plot, color='green')

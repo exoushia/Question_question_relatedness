@@ -51,7 +51,8 @@ if __name__ == '__main__':
 	parser.add_argument("-title", default="Test Set", type=str, help="Title of the Results' Report")
 
 	parser.add_argument("-mode", default='train_&_test', type=str, choices=['train_&_test', 'only_test'])
-	parser.add_argument("-to_preprocess", default=False, type=bool, help="")
+	parser.add_argument("-to_preprocess_train", default=False, type=bool, help="")
+	parser.add_argument("-to_preprocess_test", default=False, type=bool, help="")
 	parser.add_argument("-smooth", default=False, type=bool, help="")
 
 	args = parser.parse_args()
@@ -68,7 +69,7 @@ if __name__ == '__main__':
 #	device="cpu"
 	config = Config()
 	print("Preprocess")
-	print(args.to_preprocess)
+	print(args.to_preprocess_train)
 	# 	path_to_data='Data'
 	# 	train_file='train_sample.csv'
 	# 	val_file='val_sample.csv'
@@ -87,9 +88,9 @@ if __name__ == '__main__':
 	if args.mode == "train_&_test":
 		model, avg_train_losses, avg_val_losses, train_losses_plot, val_accuracies_plot, val_losses_plot, epoch_f1, vocab, embedding_matrix = train_model(
 			args.path_to_data, args.path_vocab_save, args.path_embed_matrix, args.name_train, args.name_val,
-			args.path_to_glove, args.path_to_cpt, config, args.to_preprocess)
+			args.path_to_glove, args.path_to_cpt, config, args.to_preprocess_train)
 		plot = plot_results(train_losses_plot, val_losses_plot, val_accuracies_plot, args.figname, args.smooth)
-#		plot.run(figure_sep=True)
+		plot.run(figure_sep=True)
 	elif args.mode == "only_test":
 		# unpickling vocab and embed_metrix
 		infile = open(args.path_vocab_save, 'rb')
@@ -107,7 +108,7 @@ if __name__ == '__main__':
 
 	torch.cuda.empty_cache()
 	test_loss, test_acc, test_pred_true = run_test(test_path, model, vocab, embedding_matrix, config,
-												   args.to_preprocess, target='class')
+												   args.to_preprocess_test, target='class')
 
 	# Only for Test rn - we can modify later
 	print_classification_report(test_pred_true, args.title, args.target_names, args.save_result_path)

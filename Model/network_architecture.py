@@ -169,11 +169,11 @@ class BiLSTM(nn.Module):
 		lstm_out2, (h_n2, c_n2) = self.lstm(x2.to(device))
 
 		#Self Attention
-		attn_weight_matrix1 = self.self_attention_net(lstm_out1)
-		attn_weight_matrix2 = self.self_attention_net(lstm_out2)
-		# attn_weight_matrix: (batch_size, r, seq_len)
-		hidden_matrix1 = torch.bmm(attn_weight_matrix1, lstm_out1)
-		hidden_matrix2 = torch.bmm(attn_weight_matrix2, lstm_out2)
+		# attn_weight_matrix1 = self.self_attention_net(lstm_out1)
+		# attn_weight_matrix2 = self.self_attention_net(lstm_out2)
+		# # attn_weight_matrix: (batch_size, r, seq_len)
+		# hidden_matrix1 = torch.bmm(attn_weight_matrix1, lstm_out1)
+		# hidden_matrix2 = torch.bmm(attn_weight_matrix2, lstm_out2)
 		# hidden_matrix: (batch_size, r, 2*hidden_size)
 
 		# print("Shape of hidden state is {} before concat".format(h_n1.shape))
@@ -183,13 +183,13 @@ class BiLSTM(nn.Module):
 		h_n2 = torch.cat([h_n2[0, :, :], h_n2[1, :, :]], -1).view(batch_size, 2 * self.config.hidden_size)
 
 		# Attention
-		attn_h_n1 = self.attention_net(lstm_out1, h_n1)
-		attn_h_n2 = self.attention_net(lstm_out1, h_n2)
+		# h_n1 = self.attention_net(lstm_out1, h_n1)
+		# h_n2 = self.attention_net(lstm_out1, h_n2)
 
 		# print("Shape of hidden state is {} after concat and reshape".format(h_n1.shape))
 		
 		# shape of hidden state = batch_size,2*hidden_size -> dot product across second dimension
-		dotproduct = torch.sum(torch.mul(attn_h_n1, attn_h_n2), 1).view(batch_size, -1)
+		dotproduct = torch.sum(torch.mul(h_n1, h_n2), 1).view(batch_size, -1)
 		# Shape of h_n1 => batch_size,2*hidden_size
 
 		return dotproduct

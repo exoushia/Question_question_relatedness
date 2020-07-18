@@ -18,7 +18,7 @@ def run_test(path, model, vocab, embedding_matrix_from_train, config, preprocess
 		print(rest_col.append(target))
 		preprocess_class = Preprocessing(path, target)
 		df_test, new_cols = preprocess_class.run()
-		df_test.to_csv(path[:-4] + "_preprocessed.csv")
+		df_test.to_csv(path[:-4] + "_preprocessed.csv", index=False)
 	else:
 		df_test = pd.read_csv(path, usecols=rest_col.append(target))
 

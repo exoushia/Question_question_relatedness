@@ -57,7 +57,7 @@ def data_loading(train_path, val_path, preprocess, target, config,
 			preprocess_class = Preprocessing(train_path, target)
 			df, new_cols = preprocess_class.run()
 			print(" Writing preprocessed data for future use..")
-			df.to_csv(train_path[:-4] + "_preprocessed.csv")
+			df.to_csv(train_path[:-4] + "_preprocessed.csv", index=False)
 		else:
 			rest_col=["id", "q1_Title", "q2_Title", "q1_Body", "q2_Body", "answer_text1", "answer_text2", "class"]
 			df = pd.read_csv(train_path, usecols=rest_col)
@@ -116,8 +116,8 @@ def data_loading(train_path, val_path, preprocess, target, config,
 			df_val, new_cols = preprocess_class_val.run()
 
 			print(" Writing preprocessed data for future use..")
-			df.to_csv(train_path[:-4] + "_preprocessed.csv")
-			df_val.to_csv(val_path[:-4] + "_preprocessed.csv")
+			df.to_csv(train_path[:-4] + "_preprocessed.csv", index=False)
+			df_val.to_csv(val_path[:-4] + "_preprocessed.csv", index=False)
 
 		else:
 			rest_col=["id", "q1_Title", "q2_Title", "q1_Body", "q2_Body", "answer_text1", "answer_text2", "class"]			

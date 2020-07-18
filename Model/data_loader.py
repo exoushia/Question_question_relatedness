@@ -144,9 +144,11 @@ class forming_batches:
 		if vocab_new:
 			for column in list(self.df.columns):
 				if column == self.target or column == 'id': continue
+				print(column)
 				for item in self.df[column]:
-					for i in item.split('.'):
-						self.vocab.addSentence(i.lower())
+					if item is not np.nan:
+						for i in item.split('.'):
+							self.vocab.addSentence(i.lower())
 			print("Vocabulary formed ! ")
 		else:
 			print("Using existing Vocab object! ")
@@ -176,8 +178,11 @@ class forming_batches:
 			result_word2index = []
 			for i in range(len(self.df)):
 				result = []
-				for sent in self.df[col].iloc[i].split('.'):
-					result = result + self.extracting_indices(self.vocab, sent.lower())
+				if self.df[col].iloc[i] is np.nan:
+					result = result + [0]
+				else:
+					for sent in self.df[col].iloc[i].split('.'):
+						result = result + self.extracting_indices(self.vocab, sent.lower())
 
 				result_word2index.append(result)
 			self.df[col] = result_word2index
@@ -185,6 +190,7 @@ class forming_batches:
 		self.df = self.trim(self.mapping_trimsize, self.df)
 
 		for col in self.df.columns:
+			if col in [self.target, 'id']: continue
 			self.df[col] = self.df[col].apply(lambda x: np.array(x).astype('int64').squeeze())
 
 		print("dtype ", type(self.df['q1_Title'].iloc[2]))

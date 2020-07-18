@@ -1,0 +1,17 @@
+#!/bin/sh
+#PBS -N pytorchmain
+#PBS -q gpu
+#PBS -l walltime=00:50:00,mem=400mb,nodes=1:ppn=1
+#PBS -V
+
+# User Directives
+#module load python3
+#module load miniconda3
+#cd $PBS_O_WORKDIR
+export PATH="home/mt1/15CS60R20/miniconda3/envs/py36/bin:$PATH"
+which python
+cd /home/mt1/15CS60R20/Meher/Question_question_relatedness/
+#python main.py
+python main.py -to_preprocess_test True -name_train large_link_prediction_train_NEW_shuffled_preprocessed.csv -name_val large_link_prediction_dev_NEW_shuffled_preprocessed.csv -name_test large_link_prediction_test_NEW_shuffled.csv
+#End of script
+

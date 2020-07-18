@@ -5,6 +5,7 @@ import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 from gensim.models import KeyedVectors
+from sklearn.preprocessing import LabelEncoder
 import torch.nn as nn
 import torch.optim as optim
 
@@ -44,6 +45,18 @@ def embeddings_gen(vocab, path_to_glove):
 
 	return embedding_matrix
 
+def encoding_target(df, target_col):
+	print("-> Encoding target.../n")
+	label_enc = LabelEncoder()
+	df[target_col] = label_enc.fit_transform(df[target_col])
+	return df
+
+def replace_encoding(num):
+	if num == 0: return np.array([1, 0, 0, 0]).astype('int64')
+	if num == 1: return np.array([0, 1, 0, 0]).astype('int64')
+	if num == 2: return np.array([0, 0, 1, 0]).astype('int64')
+	if num == 3: return np.array([0, 0, 0, 1]).astype('int64')
+
 
 def data_loading(train_path, val_path, preprocess, target, config,
 				 rest_col=['id', 'q1_Title', 'q1_Body', 'q1_AcceptedAnswerBody',
@@ -59,10 +72,13 @@ def data_loading(train_path, val_path, preprocess, target, config,
 			print(" Writing preprocessed data for future use..")
 			df.to_csv(train_path[:-4] + "_preprocessed.csv", index=False)
 		else:
-			rest_col=["id", "q1_Title", "q2_Title", "q1_Body", "q2_Body", "answer_text1", "answer_text2", "class"]
+			rest_col=["id", "q1_Title", "q2_Title", "q1_Body", "q2_Body", "answer_text1", "answer_text2", target]
 			df = pd.read_csv(train_path, usecols=rest_col)
 
 		vocab = Vocab('stack')
+
+		df = encoding_target(df, target)
+		df[target] = df[target].apply(lambda x: replace_encoding(int(x)))
 
 		batchify_obj = forming_batches(vocab, mapping_trimsize, df, target)
 
@@ -120,11 +136,17 @@ def data_loading(train_path, val_path, preprocess, target, config,
 			df_val.to_csv(val_path[:-4] + "_preprocessed.csv", index=False)
 
 		else:
-			rest_col=["id", "q1_Title", "q2_Title", "q1_Body", "q2_Body", "answer_text1", "answer_text2", "class"]			
+			rest_col=["id", "q1_Title", "q2_Title", "q1_Body", "q2_Body", "answer_text1", "answer_text2", target]			
 			df = pd.read_csv(train_path, usecols=rest_col)
 			df_val = pd.read_csv(val_path, usecols=rest_col)
 
 		vocab = Vocab('stack')
+
+		df = encoding_target(df, target)
+		df[target] = df[target].apply(lambda x: replace_encoding(int(x)))
+
+		df_val = encoding_target(df_val, target)
+		df_val[target] = df_val[target].apply(lambda x: replace_encoding(int(x)))
 
 		batchify_obj = forming_batches(vocab, mapping_trimsize, df, target, vocab_new=True)
 		df, vocab = batchify_obj.run()

@@ -57,7 +57,6 @@ def replace_encoding(num):
 	if num == 2: return np.array([0, 0, 1, 0]).astype('int64')
 	if num == 3: return np.array([0, 0, 0, 1]).astype('int64')
 
-
 def data_loading(train_path, val_path, preprocess, target, config,
 				 rest_col=['id', 'q1_Title', 'q1_Body', 'q1_AcceptedAnswerBody',
 						   'q1_AnswersBody', 'q2_Title', 'q2_Body', 'q2_AcceptedAnswerBody',

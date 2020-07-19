@@ -26,6 +26,9 @@ def run_test(path, model, vocab, embedding_matrix_from_train, config, preprocess
 		"Before including the test file, the vocab matrix length [Size of total Vocab for only train and dev]:{} \n\n".format(
 			vocab.n_words))
 
+	df_test = encoding_target(df_test, target)
+	df_test[target] = df_test[target].apply(lambda x: replace_encoding(int(x)))
+
 	batchify_obj = forming_batches(vocab, mapping_trimsize, df_test, target, vocab_new=True)
 	df_test, vocab = batchify_obj.run()
 

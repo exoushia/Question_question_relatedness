@@ -11,7 +11,7 @@
 export PATH="home/mt1/15CS60R20/miniconda3/envs/py36/bin:$PATH"
 which python
 cd /home/mt1/15CS60R20/Meher/Question_question_relatedness/
-python main.py -to_preprocess_train True -to_preprocess_test True
-#python main.py -mode only_test -name_train large_link_prediction_train_NEW_shuffled_preprocessed.csv -name_val large_link_prediction_dev_NEW_shuffled_preprocessed.csv -name_test test_sample.csv -to_preprocess_test True -model_path Expt_results/checkpoints/checkpoint.pt
+#python main.py -to_preprocess_train True -to_preprocess_test True
+python main.py -mode only_test -name_train large_link_prediction_train_NEW_shuffled_preprocessed.csv -name_val large_link_prediction_dev_NEW_shuffled_preprocessed.csv -name_test test_sample.csv -to_preprocess_test True -model_path Expt_results/checkpoints/checkpoint.pt
 #End of script
 

@@ -35,7 +35,7 @@ if __name__ == '__main__':
 						help="path to pretrained vocab object")
 	parser.add_argument("-path_embed_matrix", default='Expt_results/EmbedMatrix.pkl', type=str,
 						help="path to preformed word_embedding matrix")
-	parser.add_argument("-path_to_cpt", default='Expt_results/checkpoints/checkpoint.pt',
+	parser.add_argument("-path_to_cpt", default='Expt_results/checkpoints/checkpoint_dummy.pt',
 						help="Path to where checkpoints will be stored")
 	parser.add_argument("-path_to_glove", default='Data/glove.840B.300d.word2vec.txt', help="Path to word embeddings")
 	parser.add_argument("-model_path", default='', help="Path to the trained model for mode:only test")

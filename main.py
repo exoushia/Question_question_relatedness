@@ -38,7 +38,7 @@ if __name__ == '__main__':
 	parser.add_argument("-path_to_cpt", default='Expt_results/checkpoints/checkpoint.pt',
 						help="Path to where checkpoints will be stored")
 	parser.add_argument("-path_to_glove", default='Data/glove.840B.300d.word2vec.txt', help="Path to word embeddings")
-	parser.add_argument("-model_path", default='', help="Path to the trained model for mode:only test")
+	parser.add_argument("-model_path", default='Expt_results/checkpoints/checkpoint.pt', help="Path to the trained model for mode:only test")
 	parser.add_argument("-save_result_path", default="Expt_results/results.csv", help="Path to save results on test")
 
 	parser.add_argument("-name_train", default='train_sample.csv', help="Name of train file or None")
@@ -68,8 +68,7 @@ if __name__ == '__main__':
 	torch.backends.cudnn.benchmark = True
 #	device="cpu"
 	config = Config()
-	print("Preprocess")
-	print(args.to_preprocess_train)
+
 	# 	path_to_data='Data'
 	# 	train_file='train_sample.csv'
 	# 	val_file='val_sample.csv'

@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
-import pickle
-import re
+import pickle, re
 # Ignore warnings
 import warnings
 
@@ -20,12 +19,10 @@ import torch
 from torch.utils.data import DataLoader, Dataset, SubsetRandomSampler
 import torch.nn as nn
 import torch.optim as optim
-
-# CUDA for PyTorch
-use_cuda = torch.cuda.is_available()
-device = torch.device("cuda:0" if use_cuda else "cpu")
 torch.backends.cudnn.benchmark = True
 
+from ..main import Config
+config = Config()
 
 # Defining the Vocab class to be able to map words to indices and indices to words
 class Vocab:
@@ -123,8 +120,8 @@ class Bilstm_Dataset(Dataset):
 
 	def __init__(self, df, col, target_col):
 		# rest_col = [col for col in rest_col if col not in ['id']]
-		self.feats = torch.as_tensor(list(df[col].values.tolist()), dtype=torch.long, device=device)
-		self.target = torch.as_tensor(list(df[target_col].values.tolist()), dtype=torch.long, device=device)
+		self.feats = torch.as_tensor(list(df[col].values.tolist()), dtype=torch.long, device=config.device)
+		self.target = torch.as_tensor(list(df[target_col].values.tolist()), dtype=torch.long, device=config.device)
 		self.nsamples = len(df)
 
 	def __len__(self):

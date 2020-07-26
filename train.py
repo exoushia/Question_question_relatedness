@@ -1,8 +1,5 @@
-import tqdm
-import time
-import sys
+import tqdm, time, sys, pickle
 import numpy as np
-import pickle
 import matplotlib.pyplot as plt
 from gensim.models import KeyedVectors
 from sklearn.preprocessing import LabelEncoder
@@ -12,11 +9,10 @@ import torch.optim as optim
 from Model.network_architecture import *
 from Model.data_loader import *
 from utils import *
+from main import Config
 
-# CUDA for PyTorch
-use_cuda = torch.cuda.is_available()
-device = torch.device("cuda:0" if use_cuda else "cpu")
 torch.backends.cudnn.benchmark = True
+config = Config()
 
 
 def embeddings_gen(vocab, path_to_glove):
@@ -213,7 +209,7 @@ def evaluate_model(model, loader, num_batches, batch_size):
 		body = next(body_iter)  # ith batch
 		ans = next(ans_iter)  # ith batch
 
-		y_pred = model.calling(title[0].to(device), body[0].to(device), ans[0].to(device), batch_size)
+		y_pred = model.calling(title[0].to(config.device), body[0].to(config.device), ans[0].to(config.device), batch_size)
 		labels = title[1]
 
 		# print("Shape of y pred2 {}".format(y_pred.shape))
@@ -252,7 +248,7 @@ def run_train(model, train_loader, val_loader, epoch, num_batches_train, num_bat
 
 		# print("Shape of train title iter {}".format(title[0].shape))
 
-		y_pred = model.calling(title[0].to(device), body[0].to(device), ans[0].to(device), batch_size)
+		y_pred = model.calling(title[0].to(config.device), body[0].to(config.device), ans[0].to(config.device), batch_size)
 		y_true = title[1]
 
 		# print("Shape of y pred {}".format(y_pred.shape))
@@ -311,7 +307,7 @@ def train_model(path_to_data, path_vocab_save, path_embed_matrix_save, train_fil
 	early_stopping = EarlyStopping(patience=config.patience, verbose=True, delta=config.delta, path_to_cpt=path_to_cpt)
 
 	if torch.cuda.is_available():
-		model.to(device)
+		model.to(config.device)
 
 	model.train()
 

@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "main.py", line 111, in <module>
+    args.to_preprocess_test, target='class')
+  File "/home/mt1/15CS60R20/Meher/Question_question_relatedness/test.py", line 40, in run_test
+    dataset_title = Bilstm_Dataset(df_test, rest_col[0:2], rest_col[-1])
+  File "/home/mt1/15CS60R20/Meher/Question_question_relatedness/Model/data_loader.py", line 127, in __init__
+    self.target = torch.as_tensor(list(df[target_col].values.tolist()), dtype=torch.long, device=device)
+ValueError: too many dimensions 'str'

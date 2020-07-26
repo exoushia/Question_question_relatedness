@@ -11,6 +11,7 @@ import numpy as np
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda:0" if use_cuda else "cpu")
 torch.backends.cudnn.benchmark = True
+#device = "cpu"
 
 class EarlyStopping:
 	"""Early stops the training if validation loss doesn't improve after a given patience."""

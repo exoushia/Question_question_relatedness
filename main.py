@@ -110,7 +110,7 @@ if __name__ == '__main__':
 		model.eval()
 
 	torch.cuda.empty_cache()
-	test_loss, test_acc, test_pred_true = run_test(test_path, model, vocab, embedding_matrix, config,
+	test_loss, test_acc, test_pred_true = run_test(test_path, model, vocab, embedding_matrix, path_to_glove, config,
 												   args.to_preprocess_test, target='class')
 
 	# Only for Test rn - we can modify later

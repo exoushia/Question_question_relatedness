@@ -2,3 +2,4 @@
 
 ## Todo
 * BERT
+* update embeddings matrix instead creat new in test

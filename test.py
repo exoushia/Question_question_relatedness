@@ -1,12 +1,14 @@
 import pandas as pd
 import numpy as np
+import torch
+import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset, SubsetRandomSampler
 
 from Model.data_loader import *
 from train import *
 
 
-def run_test(path, model, vocab, embedding_matrix_from_train, config, preprocess, target='class',
+def run_test(path, model, vocab, embedding_matrix_from_train, path_to_glove, config, preprocess, target='class',
 			 rest_col=['id', 'q1_Title', 'q1_Body', 'q1_AcceptedAnswerBody',
 					   'q1_AnswersBody', 'q2_Title', 'q2_Body', 'q2_AcceptedAnswerBody',
 					   'q2_AnswersBody'],
@@ -64,6 +66,11 @@ def run_test(path, model, vocab, embedding_matrix_from_train, config, preprocess
 	del test_loader_title, test_loader_body, test_loader_ans
 	del dataset_title, dataset_body, dataset_answer
 	del df_test
+
+	print("Updating Embeddings..\n")
+	embedding_matrix = embeddings_gen(vocab, path_to_glove)
+	model.embeddings = nn.Embedding(len(vocab.word2index), config.embed_size)
+	model.embeddings.weight = nn.Parameter(torch.as_tensor(embeddings_matrix, dtype=torch.float32), requires_grad=False)
 
 	print("Starting Evaluation on Test.. \n\n")
 	test_loss, test_acc, pred_true = evaluate_model(model, test_loaders, num_batches_test, config.batch_size_test)

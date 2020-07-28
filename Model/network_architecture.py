@@ -7,9 +7,10 @@ import torch.nn.functional as F
 import tqdm
 import numpy as np
 torch.backends.cudnn.benchmark = True
-
-from ..main import Config
-config = Config()
+import os, sys
+sys.path.append(os.path.realpath('..'))
+from main import device
+#config = Config()
 
 
 class EarlyStopping:

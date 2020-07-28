@@ -1,6 +1,11 @@
 from sklearn.metrics import classification_report
 import argparse, time
+import torch
 import torch.nn as nn
+torch.autograd.set_detect_anomaly(True)
+
+# CUDA for PyTorch
+device = torch.device("cuda:0" if not torch.cuda.is_available() else "cpu")
 
 from Model.network_architecture import *
 from train import train_model
@@ -29,8 +34,7 @@ class Config(object):
 	patience = 25
 	delta = 0.001
 	batch_size_test = 32
-	# CUDA for PyTorch
-	device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 
 
 if __name__ == '__main__':

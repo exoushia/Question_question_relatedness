@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-import pickle, re
+import pickle, re, os, sys
 # Ignore warnings
 import warnings
 
@@ -21,8 +21,9 @@ import torch.nn as nn
 import torch.optim as optim
 torch.backends.cudnn.benchmark = True
 
-from ..main import Config
-config = Config()
+sys.path.append(os.path.realpath('..'))
+from main import device
+#config = Config()
 
 # Defining the Vocab class to be able to map words to indices and indices to words
 class Vocab:

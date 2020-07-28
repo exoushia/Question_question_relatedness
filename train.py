@@ -9,10 +9,10 @@ import torch.optim as optim
 from Model.network_architecture import *
 from Model.data_loader import *
 from utils import *
-from main import Config
+from main import device
 
 torch.backends.cudnn.benchmark = True
-config = Config()
+#config = Config()
 
 
 def embeddings_gen(vocab, path_to_glove):

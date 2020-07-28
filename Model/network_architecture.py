@@ -1,5 +1,6 @@
 # https://discuss.pytorch.org/t/how-to-correctly-give-inputs-to-embedding-lstm-and-linear-layers/15398/2
 # https://stackoverflow.com/questions/49466894/how-to-correctly-give-inputs-to-embedding-lstm-and-linear-layers-in-pytorch
+import os, sys
 
 import torch
 import torch.nn as nn
@@ -7,10 +8,9 @@ import torch.nn.functional as F
 import tqdm
 import numpy as np
 torch.backends.cudnn.benchmark = True
-import os, sys
+
 sys.path.append(os.path.realpath('..'))
 from main import device
-#config = Config()
 
 
 class EarlyStopping:
@@ -154,8 +154,8 @@ class BiLSTM(nn.Module):
 	# https://discuss.pytorch.org/t/how-to-correctly-give-inputs-to-embedding-lstm-and-linear-layers/15398/2
 	# https://stackoverflow.com/questions/49466894/how-to-correctly-give-inputs-to-embedding-lstm-and-linear-layers-in-pytorch
 	def forward(self, pairs, batch_size):
-		q1 = torch.stack([x[0] for x in pairs]).to(config.device)
-		q2 = torch.stack([x[1] for x in pairs]).to(config.device)
+		q1 = torch.stack([x[0] for x in pairs]).to(device)
+		q2 = torch.stack([x[1] for x in pairs]).to(device)
 
 		# Input: batch_size x seq_length
 		# Output: batch-size x seq_length x embedding_dimension
@@ -166,8 +166,8 @@ class BiLSTM(nn.Module):
 		# Output: (batch_size, seq_length, 2*hidden_size) (batch_size is dim0 since batch_first is true)
 		# last_hidden_state: (2 * batch_size, hidden_size)  (2 due to bidirectional, otherwise would be 1)
 		# last_cell_state: (2 * batch_size, hidden_size)    (2 due to bidirectional, otherwise would be 1)
-		lstm_out1, (h_n1, c_n1) = self.lstm(x1.to(config.device))
-		lstm_out2, (h_n2, c_n2) = self.lstm(x2.to(config.device))
+		lstm_out1, (h_n1, c_n1) = self.lstm(x1.to(device))
+		lstm_out2, (h_n2, c_n2) = self.lstm(x2.to(device))
 
 		#Self Attention
 		# attn_weight_matrix1 = self.self_attention_net(lstm_out1)

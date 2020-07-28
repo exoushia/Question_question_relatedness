@@ -23,7 +23,7 @@ torch.backends.cudnn.benchmark = True
 
 sys.path.append(os.path.realpath('..'))
 from main import device
-#config = Config()
+
 
 # Defining the Vocab class to be able to map words to indices and indices to words
 class Vocab:
@@ -121,8 +121,8 @@ class Bilstm_Dataset(Dataset):
 
 	def __init__(self, df, col, target_col):
 		# rest_col = [col for col in rest_col if col not in ['id']]
-		self.feats = torch.as_tensor(list(df[col].values.tolist()), dtype=torch.long, device=config.device)
-		self.target = torch.as_tensor(list(df[target_col].values.tolist()), dtype=torch.long, device=config.device)
+		self.feats = torch.as_tensor(list(df[col].values.tolist()), dtype=torch.long, device=device)
+		self.target = torch.as_tensor(list(df[target_col].values.tolist()), dtype=torch.long, device=device)
 		self.nsamples = len(df)
 
 	def __len__(self):

@@ -5,7 +5,7 @@ import torch.nn as nn
 torch.autograd.set_detect_anomaly(True)
 
 # CUDA for PyTorch
-device = torch.device("cuda:0" if not torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 from Model.network_architecture import *
 from train import train_model
@@ -110,7 +110,7 @@ if __name__ == '__main__':
 		model.eval()
 
 	torch.cuda.empty_cache()
-	test_loss, test_acc, test_pred_true = run_test(test_path, model, vocab, embedding_matrix, path_to_glove, config,
+	test_loss, test_acc, test_pred_true = run_test(test_path, model, vocab, embedding_matrix, args.path_to_glove, config,
 												   args.to_preprocess_test, target='class')
 
 	# Only for Test rn - we can modify later

@@ -6,6 +6,7 @@ from sklearn.preprocessing import LabelEncoder
 import torch.nn as nn
 import torch.optim as optim
 
+from Model.network_architecture import BiLSTM
 from Model.network_architecture import *
 from Model.data_loader import *
 from utils import *

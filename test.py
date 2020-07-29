@@ -68,7 +68,7 @@ def run_test(path, model, vocab, embedding_matrix_from_train, path_to_glove, con
 	del df_test
 
 	print("Updating Embeddings..\n")
-	embedding_matrix = embeddings_gen(vocab, path_to_glove)
+	embeddings_matrix = embeddings_gen(vocab, path_to_glove)
 	model.embeddings = nn.Embedding(len(vocab.word2index), config.embed_size)
 	model.embeddings.weight = nn.Parameter(torch.as_tensor(embeddings_matrix, dtype=torch.float32), requires_grad=False)
 

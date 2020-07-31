@@ -155,7 +155,7 @@ class BiLSTM(nn.Module):
 
     # https://discuss.pytorch.org/t/how-to-correctly-give-inputs-to-embedding-lstm-and-linear-layers/15398/2
     # https://stackoverflow.com/questions/49466894/how-to-correctly-give-inputs-to-embedding-lstm-and-linear-layers-in-pytorch
-    def forward(self, pairs, batch_size):
+    def similarity(self, pairs, batch_size):
         q1 = torch.stack([x[0] for x in pairs]).to(device)
         q2 = torch.stack([x[1] for x in pairs]).to(device)
 
@@ -197,10 +197,10 @@ class BiLSTM(nn.Module):
 
         return dotproduct
 
-    def calling(self, t, b, a, batch_size):
-        inner_dot_titles = self.forward(t, batch_size)
-        inner_dot_body = self.forward(b, batch_size)
-        inner_dot_ans = self.forward(a, batch_size)
+    def forward(self, t, b, a, batch_size):
+        inner_dot_titles = self.similarity(t, batch_size)
+        inner_dot_body = self.similarity(b, batch_size)
+        inner_dot_ans = self.similarity(a, batch_size)
 
         # need to concatenate these tensors along the right dimention - batch size
         concat_input_to_dense = torch.cat((inner_dot_titles, inner_dot_body, inner_dot_ans), 1)

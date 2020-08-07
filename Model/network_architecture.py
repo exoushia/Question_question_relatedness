@@ -205,7 +205,6 @@ class BiLSTM(nn.Module):
 		# need to concatenate these tensors along the right dimention - batch size
 		concat_input_to_dense = torch.cat((inner_dot_titles, inner_dot_body, inner_dot_ans), 1)
 
-		# concat_input_to_dense = concat_input_to_dense.view(-1,)
 		output = self.net(concat_input_to_dense)
 		return output.view(-1, self.config.output_size)
 
@@ -214,7 +213,7 @@ class BiLSTM(nn.Module):
 # https://chriskhanhtran.github.io/posts/cnn-sentence-classification/
 class CNN_classifier(nn.Module):
 	"""An 1D Convulational Neural Network for Sentence Classification."""
-	def __init__(self, pretrained_embedding=None, freeze_embedding=False, vocab_size=None, embed_dim=300, filter_sizes=[3, 4, 5], num_filters=[100, 100, 100], num_classes=4, dropout=0.5):
+	def __init__(self, config, vocab_size=None, word_embeddings=None, channel='static'):
 		"""
 		The constructor for CNN_classifier class.
 		Args:
@@ -234,114 +233,74 @@ class CNN_classifier(nn.Module):
 		"""
 
 		super(CNN_classifier, self).__init__()
-		# Embedding layer
-		if pretrained_embedding is not None:
-			self.vocab_size, self.embed_dim = pretrained_embedding.shape
-			self.embedding = nn.Embedding.from_pretrained(pretrained_embedding, freeze=freeze_embedding)
-		else:
-			self.embed_dim = embed_dim
-			self.embeddings = nn.Embedding(num_embeddings=vocab_size,
-										  embedding_dim=self.embed_dim,
-										  padding_idx=0,
-										  max_norm=5.0)
 
-		# Layer 1: Word2Vec Embedding.
-		# self.embeddings = nn.Embedding(vocab_size, self.config.embed_size)
-			self.embeddings.weight = nn.Parameter(torch.as_tensor(word_embeddings, dtype=torch.float32),
-											  requires_grad=False)
-
-		# Conv Network
-		self.conv1d_list = nn.ModuleList(
-			[nn.Conv1d(in_channels=self.embed_dim, out_channels=num_filters[i], kernel_size=filter_sizes[i]) for i in range(len(filter_sizes))]
-			)
-		# Fully-connected layer and Dropout
-		self.fc = nn.Linear(np.sum(num_filters), num_classes)
-		self.dropout = nn.Dropout(p=dropout)
-
-
-	def forward(self, input_ids):
-		"""Perform a forward pass through the network.
-
-		Args:
-			input_ids (torch.Tensor): A tensor of token ids with shape
-				(batch_size, max_sent_length)
-
-		Returns:
-			logits (torch.Tensor): Output logits with shape (batch_size,
-				n_classes)
-		"""
-
-		# Get embeddings from `input_ids`. Output shape: (b, max_len, embed_dim)
-		x_embed = self.embedding(input_ids).float()
-
-		# Permute `x_embed` to match input shape requirement of `nn.Conv1d`.
-		# Output shape: (b, embed_dim, max_len)
-		x_reshaped = x_embed.permute(0, 2, 1)
-
-		# Apply CNN and ReLU. Output shape: (b, num_filters[i], L_out)
-		x_conv_list = [F.relu(conv1d(x_reshaped)) for conv1d in self.conv1d_list]
-
-		# Max pooling. Output shape: (b, num_filters[i], 1)
-		x_pool_list = [F.max_pool1d(x_conv, kernel_size=x_conv.shape[2])
-			for x_conv in x_conv_list]
-		
-		# Concatenate x_pool_list to feed the fully connected layer.
-		# Output shape: (b, sum(num_filters))
-		x_fc = torch.cat([x_pool.squeeze(dim=2) for x_pool in x_pool_list],
-						 dim=1)
-		
-		# Compute logits. Output shape: (b, n_classes)
-		logits = self.fc(self.dropout(x_fc))
-
-		return logits
-
-
-
-class CNNSentence(nn.Module):
-
-	def __init__(self, args, data, vectors):
-		super(CNNSentence, self).__init__()
-
-		self.args = args
-
-		self.word_emb = nn.Embedding(args.word_vocab_size, args.word_dim, padding_idx=1)
+		self.config = config
+		# Embedding layer		
+		# self.embeddings = nn.Embedding.from_pretrained(pretrained_embedding, freeze=freeze_embedding)
+		self.embeddings = nn.Embedding(vocab_size, self.config.embed_size)
 		# initialize word embedding with pretrained word2vec
-		if args.mode != 'rand':
-			self.word_emb.weight.data.copy_(torch.from_numpy(vectors))
-		if args.mode in ('static', 'multichannel'):
-			self.word_emb.weight.requires_grad = False
-		if args.mode == 'multichannel':
-			self.word_emb_multi = nn.Embedding(args.word_vocab_size, args.word_dim, padding_idx=1)
-			self.word_emb_multi.weight.data.copy_(torch.from_numpy(vectors))
+		if channel != 'rand':
+			self.embeddings.weight.data.copy_(torch.from_numpy(word_embeddings, dtype=torch.float32))
+		if channel in ('static', 'multichannel'):
+			self.embeddings.weight.requires_grad = False
+		if channel == 'multichannel':
+			self.embeddings_multi = nn.Embedding(vocab_size, self.config.embed_size)
+			self.embeddings_multi.weight.data.copy_(torch.from_numpy(word_embeddings, dtype=torch.float32))
 			self.in_channels = 2
 		else:
 			self.in_channels = 1
 
 		# <unk> vectors is randomly initialized
-		nn.init.uniform_(self.word_emb.weight.data[0], -0.05, 0.05)
+		nn.init.uniform_(self.embeddings.weight.data[0], -0.05, 0.05)
 
-		for filter_size in args.FILTER_SIZES:
-			conv = nn.Conv1d(self.in_channels, args.num_feature_maps, args.word_dim * filter_size, stride=args.word_dim)
-			setattr(self, 'conv_' + str(filter_size), conv)
+		# Conv Network
+		self.conv1d_list = nn.ModuleList(
+			[nn.Conv1d(in_channels=self.config.embed_size, out_channels=self.config.num_filters[i], kernel_size=self.config.filter_sizes[i]) for i in range(len(self.config.filter_sizes))]
+			)
+		# Fully-connected layer, Dropout and Softmax
+		self.fc = nn.Sequential(nn.Linear(np.sum(self.config.num_filters), self.config.num_classes), nn.Dropout(p=self.config.dropout), nn.Softmax())
 
-		self.fc = nn.Linear(len(args.FILTER_SIZES) * 100, args.class_size)
 
-	def forward(self, batch):
-		x = batch.text
-		batch_size, seq_len = x.size()
+	def similarity(self, input_pairs):
+        q1 = torch.stack([x[0] for x in input_pairs]).to(device)
+        q2 = torch.stack([x[1] for x in input_pairs]).to(device)
 
-		conv_in = self.word_emb(x).view(batch_size, 1, -1)
-		if self.args.mode == 'multichannel':
-			conv_in_multi = self.word_emb_multi(x).view(batch_size, 1, -1)
-			conv_in = torch.cat((conv_in, conv_in_multi), 1)
+		# Get embeddings from `input_ids`. Output shape: (b, max_len, embed_dim)
+		x_embed1 = self.embeddings(q1).float()
+		x_embed2 = self.embeddings(q2).float()
 
-		conv_result = [
-			F.max_pool1d(F.relu(getattr(self, 'conv_' + str(filter_size))(conv_in)), seq_len - filter_size + 1).view(-1,
-																													self.args.num_feature_maps)
-			for filter_size in self.args.FILTER_SIZES]
+		# Permute `x_embed` to match input shape requirement of `nn.Conv1d`.
+		# Output shape: (b, embed_dim, max_len)
+		x_reshaped1 = x_embed1.permute(0, 2, 1)
+		x_reshaped2 = x_embed2.permute(0, 2, 1)
 
-		out = torch.cat(conv_result, 1)
-		out = F.dropout(out, p=self.args.dropout, training=self.training)
-		out = self.fc(out)
+		# Apply CNN and ReLU. Output shape: (b, num_filters[i], L_out)
+		x_conv_list1 = [F.relu(conv1d(x_reshaped1)) for conv1d in self.conv1d_list]
+		x_conv_list2 = [F.relu(conv1d(x_reshaped2)) for conv1d in self.conv1d_list]
 
-		return out
+		# Max pooling. Output shape: (b, num_filters[i], 1)
+		x_pool_list1 = [F.max_pool1d(x_conv, kernel_size=x_conv.shape[2]) for x_conv in x_conv_list1]
+		x_pool_list2 = [F.max_pool1d(x_conv, kernel_size=x_conv.shape[2]) for x_conv in x_conv_list2]
+		
+		# Concatenate x_pool_list to feed the fully connected layer.
+		# Output shape: (b, sum(num_filters))
+		x_fc1 = torch.cat([x_pool.squeeze(dim=2) for x_pool in x_pool_list1], dim=1)
+		x_fc2 = torch.cat([x_pool.squeeze(dim=2) for x_pool in x_pool_list2], dim=1)
+		
+		x_pool_dot = torch.sum(torch.mul(x_pool_list1, x_pool_list2), 1).view(batch_size, -1)
+
+		return x_pool_dot
+
+
+	def forward(self, t, b, a, batch_size):
+        inner_dot_titles = self.similarity(t)
+        inner_dot_body = self.similarity(b)
+        inner_dot_ans = self.similarity(a)
+
+		# need to concatenate these tensors along the right dimention - batch size
+		concat_input_to_dense = torch.cat((inner_dot_titles, inner_dot_body, inner_dot_ans), 1)
+
+		# Compute logits. Output shape: (batch_size, n_classes)
+		output = self.fc(concat_input_to_dense)
+
+		return output.view(-1, self.config.output_size)

@@ -6,7 +6,7 @@
 * save predicted values for future reference
 * Debug to see input to softmax layers
 * cdb
-* CNN and Co-attention
+* CNN
 * tensorboard use
 * reduce drop-out
 

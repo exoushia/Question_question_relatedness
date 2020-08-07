@@ -16,12 +16,12 @@ timestamp = time.strftime("%d-%m-%Y_%H:%M")
 print(timestamp)
 
 
-class Config(object):
+class BiLSTM_Config(object):
     embed_size = 300
     hidden_layers = 1
     hidden_size = 128
     bidirectional = True
-    output_size = 4
+    num_classes = 4
     epochs = 25
     lr = 0.001
     ll_hidden_size = 50  # Linear layer hidden sizes
@@ -34,6 +34,25 @@ class Config(object):
     patience = 25
     delta = 0.001
     batch_size_test = 32
+
+
+class CNN_Config(object):
+    filter_sizes=[3, 4, 5],
+    num_filters=[100, 100, 100],
+    dropout=0.5,
+    lr=0.01
+    rho=0.95
+    embed_size=300,
+    num_classes=4
+    epochs = 25
+    batch_size = 32
+    split_ratio = 0.4
+    loss_fn = nn.CrossEntropyLoss()
+    patience = 25
+    delta = 0.001
+    batch_size_test = 32
+
+
 
 def set_seed(seed_value=42):
     """Set seed for reproducibility."""
@@ -70,12 +89,14 @@ if __name__ == '__main__':
                         help="Names of images to be stored, None : if need not be saved")
     parser.add_argument("-title", default="Test Set", type=str, help="Title of the Results' Report")
     parser.add_argument("-mode", default='train_&_test', type=str, choices=['train_&_test', 'only_test'])
+    parser.add_argument("-model_choice", default='BiLSTM', type=str, choices=['CNN', 'BiLSTM'])
+    parser.add_argument("-CNN_channel", default='static', type=str, choices=["rand", "static", "non-static", "multichannel"], help="available models: rand, static, non-static, multichannel")
     parser.add_argument("-smooth", default=False, type=bool, help="")
 
     args = parser.parse_args()
-
-    config = Config()
-
+    set_seed(100)
+    lstm_config = BiLSTM_Config()
+    cnn_config = CNN_Config()
     # 	path_to_data='Data'
     # 	train_file='train_sample.csv'
     # 	val_file='val_sample.csv'
@@ -91,10 +112,19 @@ if __name__ == '__main__':
 
     test_path = args.path_to_data + '/' + args.name_test
 
+    if args.model == "BiLSTM":
+        config = lstm_config
+    elif args.mode == "CNN":
+        config = cnn_config
+    else:
+        print("Invalid model choice")
+        return
+
     if args.mode == "train_&_test":
         model, avg_train_losses, avg_val_losses, train_losses_plot, val_accuracies_plot, val_losses_plot, epoch_f1, vocab, embedding_matrix = train_model(
-            args.path_to_data, args.path_vocab_save, args.path_embed_matrix, args.name_train, args.name_val,
-            args.path_to_glove, args.path_to_model, config, args.to_preprocess_train)
+        args.model, args.CNN_channel, args.path_to_data, args.path_vocab_save, args.path_embed_matrix, args.name_train, args.name_val,
+        args.path_to_glove, args.path_to_model, config, args.to_preprocess_train)
+
         plot = plot_results(train_losses_plot, val_losses_plot, val_accuracies_plot, args.figname, args.smooth)
         plot.run(figure_sep=True)
     elif args.mode == "only_test":
@@ -108,14 +138,20 @@ if __name__ == '__main__':
         infile.close()
 
         # Unloading the best model saved in last session
-        model = BiLSTM(config, len(vocab.word2index), embedding_matrix).to(device)
-        model.load_state_dict(torch.load(args.path_to_model))
+        if args.model == "BiLSTM":
+            model = BiLSTM(lstm_config, len(vocab.word2index), embedding_matrix).to(device)
+            model.load_state_dict(torch.load(args.path_to_model))
+        elif args.mode == "CNN":
+            model = CNN(cnn_config, len(vocab.word2index), embedding_matrix).to(device)
+            model.load_state_dict(torch.load(args.path_to_model))
+
         model.eval()
 
     torch.cuda.empty_cache()
     test_loss, test_acc, test_pred_true = run_test(test_path, model, vocab, embedding_matrix, args.path_to_glove,
-                                                   config,
-                                                   args.to_preprocess_test, target='class')
+                                                   config, args.to_preprocess_test, target='class')
 
     # Only for Test rn - we can modify later
     print_classification_report(test_pred_true, args.title, args.target_names, args.save_result_path)
+
+

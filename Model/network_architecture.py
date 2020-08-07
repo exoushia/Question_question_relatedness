@@ -186,8 +186,8 @@ class BiLSTM(nn.Module):
         h_n2 = torch.cat([h_n2[0, :, :], h_n2[1, :, :]], -1).view(batch_size, 2 * self.config.hidden_size)
 
         # Attention
-        # h_n1 = self.attention_net(lstm_out1, h_n1)
-        # h_n2 = self.attention_net(lstm_out1, h_n2)
+        h_n1 = self.attention_net(lstm_out1, h_n1)
+        h_n2 = self.attention_net(lstm_out1, h_n2)
 
         # print("Shape of hidden state is {} after concat and reshape".format(h_n1.shape))
 

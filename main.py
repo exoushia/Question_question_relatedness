@@ -35,6 +35,14 @@ class Config(object):
     delta = 0.001
     batch_size_test = 32
 
+def set_seed(seed_value=42):
+    """Set seed for reproducibility."""
+    random.seed(seed_value)
+    np.random.seed(seed_value)
+    torch.manual_seed(seed_value)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed_value)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -65,12 +73,6 @@ if __name__ == '__main__':
     parser.add_argument("-smooth", default=False, type=bool, help="")
 
     args = parser.parse_args()
-
-    # setting seeds for reproducibility
-    torch.manual_seed(100)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(100)
-    np.random.seed(100)
 
     config = Config()
 

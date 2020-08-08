@@ -1,3 +1,4 @@
+import sys
 from sklearn.metrics import classification_report
 import argparse, time
 import torch
@@ -112,17 +113,17 @@ if __name__ == '__main__':
 
     test_path = args.path_to_data + '/' + args.name_test
 
-    if args.model == "BiLSTM":
+    if args.model_choice == "BiLSTM":
         config = lstm_config
-    elif args.mode == "CNN":
+    elif args.model_choice == "CNN":
         config = cnn_config
     else:
         print("Invalid model choice")
-        return
+        sys.exit()
 
     if args.mode == "train_&_test":
         model, avg_train_losses, avg_val_losses, train_losses_plot, val_accuracies_plot, val_losses_plot, epoch_f1, vocab, embedding_matrix = train_model(
-        args.model, args.CNN_channel, args.path_to_data, args.path_vocab_save, args.path_embed_matrix, args.name_train, args.name_val,
+        args.model_choice, args.CNN_channel, args.path_to_data, args.path_vocab_save, args.path_embed_matrix, args.name_train, args.name_val,
         args.path_to_glove, args.path_to_model, config, args.to_preprocess_train)
 
         plot = plot_results(train_losses_plot, val_losses_plot, val_accuracies_plot, args.figname, args.smooth)
@@ -138,10 +139,10 @@ if __name__ == '__main__':
         infile.close()
 
         # Unloading the best model saved in last session
-        if args.model == "BiLSTM":
+        if args.model_choice == "BiLSTM":
             model = BiLSTM(lstm_config, len(vocab.word2index), embedding_matrix).to(device)
             model.load_state_dict(torch.load(args.path_to_model))
-        elif args.mode == "CNN":
+        elif args.model_choice == "CNN":
             model = CNN(cnn_config, len(vocab.word2index), embedding_matrix).to(device)
             model.load_state_dict(torch.load(args.path_to_model))
 

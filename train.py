@@ -6,7 +6,6 @@ from sklearn.preprocessing import LabelEncoder
 import torch.nn as nn
 import torch.optim as optim
 
-from Model.network_architecture import BiLSTM
 from Model.network_architecture import *
 from Model.data_loader import *
 from utils import *
@@ -262,7 +261,7 @@ def run_train(model, train_loader, val_loader, epoch, num_batches_train, num_bat
         losses.append(loss.detach().cpu().numpy())
         optimizer.step()
 
-        if i % 300 == 0:
+        if i % 200 == 0:
             print("Iter: {},Epoch: {}\n".format(i + 1, epoch))
             avg_train_loss = np.mean(losses)
             train_losses.append(avg_train_loss)
@@ -283,7 +282,7 @@ def run_train(model, train_loader, val_loader, epoch, num_batches_train, num_bat
     return train_losses, val_losses, val_accuracies, f1
 
 
-def train_model(path_to_data, path_vocab_save, path_embed_matrix_save, train_file, val_file, path_to_glove,
+def train_model(model_choice, CNN_channel, path_to_data, path_vocab_save, path_embed_matrix_save, train_file, val_file, path_to_glove,
                 path_to_cpt, config, preprocess=False):
     train_path = path_to_data + '/' + train_file
     if val_file is None:
@@ -303,15 +302,17 @@ def train_model(path_to_data, path_vocab_save, path_embed_matrix_save, train_fil
     save_object(vocab, path_vocab_save)
     save_object(embedding_matrix, path_embed_matrix_save)
 
-    model = BiLSTM(config, len(vocab.word2index), embedding_matrix)
-    optimizer = optim.Adam(model.parameters(), lr=config.lr)
+    if model_choice == "BiLSTM":
+        model = BiLSTM(config, len(vocab.word2index), embedding_matrix)
+        optimizer = optim.Adam(model.parameters(), lr=config.lr)
+    elif model_choice == "CNN":
+        model = CNN_classifier(config, len(vocab.word2index), embedding_matrix, CNN_channel)
+        optimizer = optim.Adadelta(model.parameters(), lr=config.lr, rho=config.rho)
 
-    # initialize the early_stopping object
+    # Initialize the early_stopping object
     early_stopping = EarlyStopping(patience=config.patience, verbose=True, delta=config.delta, path_to_cpt=path_to_cpt)
 
-    if torch.cuda.is_available():
-        model.to(device)
-
+    model.to(device)
     model.train()
 
     train_losses_plot = []

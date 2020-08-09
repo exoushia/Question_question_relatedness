@@ -5,3 +5,4 @@ glove.840B.300d.word2vec.txt
 *.pkl
 *.pt
 *.pyc
+.idea/

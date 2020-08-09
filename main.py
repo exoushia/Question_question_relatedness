@@ -1,4 +1,4 @@
-import sys
+import sys, random
 from sklearn.metrics import classification_report
 import argparse, time
 import torch
@@ -19,40 +19,42 @@ print(timestamp)
 
 class BiLSTM_Config(object):
 	embed_size = 300
+	num_classes = 4
+	epochs = 25
+	batch_size = 32
+	batch_size_test = 32
+	loss_fn = nn.CrossEntropyLoss()
+	sample = 1
+	patience = 25
+	delta = 0.001
+	lr = 0.001
+	split_ratio = 0.4
+	dropout_keep = 0.2
+
 	hidden_layers = 1
 	hidden_size = 128
 	bidirectional = True
-	num_classes = 4
-	epochs = 25
-	lr = 0.001
 	ll_hidden_size = 50  # Linear layer hidden sizes
-	batch_size = 32
 	# max_sen_len = 20 # Sequence length for RNN
-	dropout_keep = 0.2
-	sample = 1
-	split_ratio = 0.4
-	loss_fn = nn.CrossEntropyLoss()
-	patience = 25
-	delta = 0.001
-	batch_size_test = 32
 
 
 class CNN_Config(object):
-	filter_sizes=[3, 4, 5]
-	num_filters=[100, 100, 100]
-	dropout=0.5
-	lr=0.01
-	rho=0.95
-	embed_size=300
-	num_classes=4
+	embed_size = 300
+	num_classes = 4
 	epochs = 25
 	batch_size = 32
-	split_ratio = 0.4
+	batch_size_test = 32
 	loss_fn = nn.CrossEntropyLoss()
+	sample = 1
 	patience = 25
 	delta = 0.001
-	batch_size_test = 32
+	lr = 0.01
+	split_ratio = 0.4
+	dropout = 0.5
 
+	filter_sizes = [3, 4, 5]
+	num_filters = [100, 100, 100]
+	rho = 0.95
 
 
 def set_seed(seed_value=42):
@@ -85,8 +87,7 @@ if __name__ == '__main__':
 	parser.add_argument("-target_names", default=['Direct', 'Duplicate', 'Indirect', 'Isolated'], type=list,
 						help="classes")
 	parser.add_argument("-figname", default=["Training=" + timestamp + ".png", "Validation=" + timestamp + ".png"],
-						type=list,
-						help="Names of images to be stored, None : if need not be saved")
+						type=list, help="Names of images to be stored, None : if need not be saved")
 	parser.add_argument("-title", default="Test Set", type=str, help="Title of the Results' Report")
 	parser.add_argument("-mode", default='train_&_test', type=str, choices=['train_&_test', 'only_test'])
 	parser.add_argument("-model_choice", default='BiLSTM', type=str, choices=['CNN', 'BiLSTM'])
@@ -95,23 +96,11 @@ if __name__ == '__main__':
 
 	args = parser.parse_args()
 	set_seed(100)
-	lstm_config = BiLSTM_Config()
-	cnn_config = CNN_Config()
-	# 	path_to_data='Data'
-	# 	train_file='train_sample.csv'
-	# 	val_file='val_sample.csv'
-	# 	test_file='test_sample.csv'
-	# 	path_to_glove='Data/glove.840B.300d.word2vec.txt'
-	# 	path_to_cpt='Expt_results/checkpoints/checkpoint.pt'
-	# 	save_result_path="Expt_results/results.csv"
-	# 	to_preprocess = True
-	# 	smooth = False
-	# 	figname=["Training.png","Validation.png"]
-	# 	target_names=['Direct', 'Duplicate', 'Indirect','Isolated']
-	# 	title = "Test Set"
-
+	
 	test_path = args.path_to_data + '/' + args.name_test
 
+	lstm_config = BiLSTM_Config()
+	cnn_config = CNN_Config()
 	if args.model_choice == "BiLSTM":
 		config = lstm_config
 	elif args.model_choice == "CNN":
@@ -153,5 +142,3 @@ if __name__ == '__main__':
 
 	# Only for Test rn - we can modify later
 	print_classification_report(test_pred_true, args.title, args.target_names, args.save_result_path)
-
-

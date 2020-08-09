@@ -303,10 +303,10 @@ def train_model(model_choice, CNN_channel, path_to_data, path_vocab_save, path_e
     save_object(embedding_matrix, path_embed_matrix_save)
 
     if model_choice == "BiLSTM":
-        model = BiLSTM(config, len(vocab.word2index), embedding_matrix)
+        model = BiLSTM(config, len(vocab.index2word), embedding_matrix)
         optimizer = optim.Adam(model.parameters(), lr=config.lr)
     elif model_choice == "CNN":
-        model = CNN_classifier(config, len(vocab.word2index), embedding_matrix, CNN_channel)
+        model = CNN_classifier(config, len(vocab.index2word), embedding_matrix, CNN_channel)
         optimizer = optim.Adadelta(model.parameters(), lr=config.lr, rho=config.rho)
 
     # Initialize the early_stopping object

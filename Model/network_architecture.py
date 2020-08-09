@@ -235,6 +235,8 @@ class CNN_classifier(nn.Module):
         super(CNN_classifier, self).__init__()
 
         self.config = config
+        self.loss = config.loss_fn
+        
         # Embedding layer
         # self.embeddings = nn.Embedding.from_pretrained(pretrained_embedding, freeze=freeze_embedding)
         self.embeddings = nn.Embedding(vocab_size, self.config.embed_size)

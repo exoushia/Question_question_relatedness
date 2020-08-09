@@ -211,7 +211,7 @@ def evaluate_model(model, loader, num_batches, batch_size):
         body = next(body_iter)  # ith batch
         ans = next(ans_iter)  # ith batch
 
-        y_pred = model.calling(title[0].to(device), body[0].to(device), ans[0].to(device), batch_size)
+        y_pred = model(title[0].to(device), body[0].to(device), ans[0].to(device))
         labels = title[1]
 
         # print("Shape of y pred2 {}".format(y_pred.shape))
@@ -250,7 +250,7 @@ def run_train(model, train_loader, val_loader, epoch, num_batches_train, num_bat
 
         # print("Shape of train title iter {}".format(title[0].shape))
 
-        y_pred = model.calling(title[0].to(device), body[0].to(device), ans[0].to(device), batch_size)
+        y_pred = model(title[0].to(device), body[0].to(device), ans[0].to(device))
         y_true = title[1]
 
         # print("Shape of y pred {}".format(y_pred.shape))

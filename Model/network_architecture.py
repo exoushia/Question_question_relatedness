@@ -155,7 +155,7 @@ class BiLSTM(nn.Module):
 
     # https://discuss.pytorch.org/t/how-to-correctly-give-inputs-to-embedding-lstm-and-linear-layers/15398/2
     # https://stackoverflow.com/questions/49466894/how-to-correctly-give-inputs-to-embedding-lstm-and-linear-layers-in-pytorch
-    def similarity(self, pairs, batch_size):
+    def similarity(self, pairs):
         q1 = torch.stack([x[0] for x in pairs]).to(device)
         q2 = torch.stack([x[1] for x in pairs]).to(device)
 
@@ -182,8 +182,8 @@ class BiLSTM(nn.Module):
         # print("Shape of hidden state is {} before concat".format(h_n1.shape))
 
         # Concating both iterations of bilstm
-        h_n1 = torch.cat([h_n1[0, :, :], h_n1[1, :, :]], -1).view(batch_size, 2 * self.config.hidden_size)
-        h_n2 = torch.cat([h_n2[0, :, :], h_n2[1, :, :]], -1).view(batch_size, 2 * self.config.hidden_size)
+        h_n1 = torch.cat([h_n1[0, :, :], h_n1[1, :, :]], -1).view(self.config.batch_size, 2 * self.config.hidden_size)
+        h_n2 = torch.cat([h_n2[0, :, :], h_n2[1, :, :]], -1).view(self.config.batch_size, 2 * self.config.hidden_size)
 
         # Attention
         # h_n1 = self.attention_net(lstm_out1, h_n1)
@@ -192,21 +192,20 @@ class BiLSTM(nn.Module):
         # print("Shape of hidden state is {} after concat and reshape".format(h_n1.shape))
 
         # shape of hidden state = batch_size,2*hidden_size -> dot product across second dimension
-        dotproduct = torch.sum(torch.mul(h_n1, h_n2), 1).view(batch_size, -1)
-        # Shape of h_n1 => batch_size,2*hidden_size
+        dotproduct = torch.sum(torch.mul(h_n1, h_n2), 1).view(self.config.batch_size, -1)
 
         return dotproduct
 
-    def forward(self, t, b, a, batch_size):
-        inner_dot_titles = self.similarity(t, batch_size)
-        inner_dot_body = self.similarity(b, batch_size)
-        inner_dot_ans = self.similarity(a, batch_size)
+    def forward(self, t, b, a):
+        inner_dot_titles = self.similarity(t)
+        inner_dot_body = self.similarity(b)
+        inner_dot_ans = self.similarity(a)
 
         # need to concatenate these tensors along the right dimention - batch size
         concat_input_to_dense = torch.cat((inner_dot_titles, inner_dot_body, inner_dot_ans), 1)
 
         output = self.net(concat_input_to_dense)
-        return output.view(-1, self.config.output_size)
+        return output.view(-1, self.config.num_classes)
 
 
 # https://chriskhanhtran.github.io/posts/cnn-sentence-classification/
@@ -259,7 +258,8 @@ class CNN_classifier(nn.Module):
                        kernel_size=self.config.filter_sizes[i]) for i in range(len(self.config.filter_sizes))]
         )
         # Fully-connected layer, Dropout and Softmax
-        self.fc = nn.Sequential(nn.Linear(np.sum(self.config.num_filters), self.config.num_classes),
+        # np.sum(self.config.num_filters)
+        self.fc = nn.Sequential(nn.Linear(3, self.config.num_classes),
                                 nn.Dropout(p=self.config.dropout), nn.Softmax())
 
     def similarity(self, input_pairs):
@@ -292,7 +292,7 @@ class CNN_classifier(nn.Module):
 
         return x_pool_dot
 
-    def forward(self, t, b, a, batch_size):
+    def forward(self, t, b, a):
         inner_dot_titles = self.similarity(t)
         inner_dot_body = self.similarity(b)
         inner_dot_ans = self.similarity(a)

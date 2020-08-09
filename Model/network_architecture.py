@@ -192,7 +192,7 @@ class BiLSTM(nn.Module):
         # print("Shape of hidden state is {} after concat and reshape".format(h_n1.shape))
 
         # shape of hidden state = batch_size,2*hidden_size -> dot product across second dimension
-        dotproduct = torch.sum(torch.mul(h_n1, h_n2), 1).view(batch_size, -1)
+        dotproduct = torch.sum(torch.mul(h_n1, h_n2), 1).view(self.config.batch_size, -1)
         # Shape of h_n1 => batch_size,2*hidden_size
 
         return dotproduct
@@ -235,17 +235,20 @@ class CNN_classifier(nn.Module):
         super(CNN_classifier, self).__init__()
 
         self.config = config
+        self.loss = config.loss_fn
         # Embedding layer
         # self.embeddings = nn.Embedding.from_pretrained(pretrained_embedding, freeze=freeze_embedding)
         self.embeddings = nn.Embedding(vocab_size, self.config.embed_size)
+        print(vocab_size)
+        print(word_embeddings.shape)
         # initialize word embedding with pretrained word2vec
         if channel != 'rand':
-            self.embeddings.weight.data.copy_(torch.from_numpy(word_embeddings, dtype=torch.float32))
+            self.embeddings.weight.data.copy_(torch.as_tensor(word_embeddings, dtype=torch.float32))
         if channel in ('static', 'multichannel'):
             self.embeddings.weight.requires_grad = False
         if channel == 'multichannel':
             self.embeddings_multi = nn.Embedding(vocab_size, self.config.embed_size)
-            self.embeddings_multi.weight.data.copy_(torch.from_numpy(word_embeddings, dtype=torch.float32))
+            self.embeddings_multi.weight.data.copy_(torch.as_tensor(word_embeddings, dtype=torch.float32))
             self.in_channels = 2
         else:
             self.in_channels = 1
@@ -259,7 +262,7 @@ class CNN_classifier(nn.Module):
                        kernel_size=self.config.filter_sizes[i]) for i in range(len(self.config.filter_sizes))]
         )
         # Fully-connected layer, Dropout and Softmax
-        self.fc = nn.Sequential(nn.Linear(np.sum(self.config.num_filters), self.config.num_classes),
+        self.fc = nn.Sequential(nn.Linear(3, self.config.num_classes),
                                 nn.Dropout(p=self.config.dropout), nn.Softmax())
 
     def similarity(self, input_pairs):
@@ -288,7 +291,7 @@ class CNN_classifier(nn.Module):
         x_cat1 = torch.cat([x_pool.squeeze(dim=2) for x_pool in x_pool_list1], dim=1)
         x_cat2 = torch.cat([x_pool.squeeze(dim=2) for x_pool in x_pool_list2], dim=1)
 
-        x_pool_dot = torch.sum(torch.mul(x_cat1, x_cat2), 1).view(batch_size, -1)
+        x_pool_dot = torch.sum(torch.mul(x_cat1, x_cat2), 1).view(self.config.batch_size, -1)
 
         return x_pool_dot
 
@@ -303,4 +306,4 @@ class CNN_classifier(nn.Module):
         # Compute logits. Output shape: (batch_size, n_classes)
         output = self.fc(concat_input_to_dense)
 
-        return output.view(-1, self.config.output_size)
+        return output.view(-1, self.config.num_classes)

@@ -211,7 +211,7 @@ def evaluate_model(model, loader, num_batches, batch_size):
         body = next(body_iter)  # ith batch
         ans = next(ans_iter)  # ith batch
 
-        y_pred = model.calling(title[0].to(device), body[0].to(device), ans[0].to(device), batch_size)
+        y_pred = model(title[0].to(device), body[0].to(device), ans[0].to(device), batch_size)
         labels = title[1]
 
         # print("Shape of y pred2 {}".format(y_pred.shape))
@@ -250,7 +250,7 @@ def run_train(model, train_loader, val_loader, epoch, num_batches_train, num_bat
 
         # print("Shape of train title iter {}".format(title[0].shape))
 
-        y_pred = model.calling(title[0].to(device), body[0].to(device), ans[0].to(device), batch_size)
+        y_pred = model(title[0].to(device), body[0].to(device), ans[0].to(device), batch_size)
         y_true = title[1]
 
         # print("Shape of y pred {}".format(y_pred.shape))
@@ -303,10 +303,10 @@ def train_model(model_choice, CNN_channel, path_to_data, path_vocab_save, path_e
     save_object(embedding_matrix, path_embed_matrix_save)
 
     if model_choice == "BiLSTM":
-        model = BiLSTM(config, len(vocab.word2index), embedding_matrix)
+        model = BiLSTM(config, len(vocab.index2word), embedding_matrix)
         optimizer = optim.Adam(model.parameters(), lr=config.lr)
     elif model_choice == "CNN":
-        model = CNN_classifier(config, len(vocab.word2index), embedding_matrix, CNN_channel)
+        model = CNN_classifier(config, len(vocab.index2word), embedding_matrix, CNN_channel)
         optimizer = optim.Adadelta(model.parameters(), lr=config.lr, rho=config.rho)
 
     # Initialize the early_stopping object

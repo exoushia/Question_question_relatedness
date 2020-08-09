@@ -1,4 +1,4 @@
-import sys
+import sys, random
 from sklearn.metrics import classification_report
 import argparse, time
 import torch
@@ -38,13 +38,14 @@ class BiLSTM_Config(object):
 
 
 class CNN_Config(object):
-    filter_sizes=[3, 4, 5],
-    num_filters=[100, 100, 100],
-    dropout=0.5,
+    filter_sizes=[3, 4, 5]
+    num_filters=[100, 100, 100]
+    dropout=0.5
     lr=0.01
     rho=0.95
-    embed_size=300,
+    embed_size=300
     num_classes=4
+    sample = 1
     epochs = 25
     batch_size = 32
     split_ratio = 0.4
